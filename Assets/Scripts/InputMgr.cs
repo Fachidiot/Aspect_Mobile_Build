@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+
 public class InputMgr : MonoBehaviour
 {
     [Header("Veiwer")]
@@ -20,8 +21,13 @@ public class InputMgr : MonoBehaviour
     [Header("Timer")]
     public Text TimerText;
     public float MaxTime;
+    [Header("Count")]
+    public int MaxCount;
     [HideInInspector]
     public bool Assistant;
+    [Header("Effect Time")]
+    public Text WinTime;
+    public Text OverCount;
 
     private float m_CurrentTime;
 
@@ -39,10 +45,6 @@ public class InputMgr : MonoBehaviour
         }
     }
 
-    private bool m_bEasy;
-    private bool m_bNormal;
-    private bool m_bHard;
-
     [HideInInspector]
     public bool m_Power;
     public void PowerOn()
@@ -57,11 +59,13 @@ public class InputMgr : MonoBehaviour
         Start.gameObject.SetActive(false);
         m_WordList = new List<Word>();
         m_DoneList = new List<Word>();
+        m_InputList = new List<string>();
+        m_InputIndexList = new List<int>();
+        m_IsClicked = false;
         m_CurrentTime = 0;
         m_IsStart = false;
-        m_IsClicked = false;
-        m_Input = "";
-        m_InputIndex = 0;
+        m_IsList = false;
+        m_IsEnd = false;
         m_IsInput = false;
         Correct.gameObject.SetActive(false);
         Wrong.gameObject.SetActive(false);
@@ -84,6 +88,7 @@ public class InputMgr : MonoBehaviour
     }
 
     private bool m_IsStart;
+    private bool m_IsList;
     private bool m_IsEnd;
     public bool End { get { return m_IsEnd; } set { m_IsEnd = value; } }
     private bool m_IsClicked;
@@ -92,11 +97,13 @@ public class InputMgr : MonoBehaviour
     // 정답
     private Word m_Answer;
     // 사용자 입력
-    private string m_Input = "";
-    private static int m_InputIndex = 0;
+    private List<string> m_InputList = new List<string>();
+    private List<int> m_InputIndexList = new List<int>();
+    private int CurrentIndex = 0;
     private int m_MaxCount = 10;
     private GameObject TempInput;
     private GameObject WordManager;
+    private GameObject CrossManager;
     private List<Word> m_WordList;
     private List<Word> m_DoneList;
     private GameObject[] m_ObjectList;
@@ -105,6 +112,7 @@ public class InputMgr : MonoBehaviour
     {
         Assistant = true;
         m_IsEnd = false;
+        m_IsList = false;
         m_IsStart = false;
         m_IsCheck = false;
         m_IsInput = false;
@@ -136,13 +144,13 @@ public class InputMgr : MonoBehaviour
 
             if (_input == "BK_SPACE")
             {
-                if(m_InputIndex == 0)
+                if(m_InputIndexList[CurrentIndex] <= 0)
                 {
                     m_IsInput = false;
                     return;
                 }
 
-                TempInput = GameObject.Find(m_Answer.Answer + " " + (m_InputIndex - 1));
+                TempInput = GameObject.Find(m_Answer.Answer + " " + (m_InputIndexList[CurrentIndex] - 1));
                 var temp1 = CheckCross();
 
                 if (temp1 != null)
@@ -150,31 +158,31 @@ public class InputMgr : MonoBehaviour
                     if (temp1.GetComponent<InputWord>().IsCorrect)
                     { // 겹치는 단어가 정답일때
                         string var_string = temp1.GetComponent<InputWord>().GetInput();
-                        m_Input = m_Input.Remove(m_Input.Length - 1);
+                        m_InputList[CurrentIndex] = m_InputList[CurrentIndex].Remove(m_InputList[CurrentIndex].Length - 1);
                         Debug.Log(_input);
-                        m_InputIndex--;
+                        m_InputIndexList[CurrentIndex]--;
                         return;
                     }
-                    m_Input = m_Input.Remove(m_Input.Length - 1);
+                    m_InputList[CurrentIndex] = m_InputList[CurrentIndex].Remove(m_InputList[CurrentIndex].Length - 1);
                     Debug.Log(_input);
                     TempInput.GetComponent<InputWord>().Wrong();
                     temp1.GetComponent<InputWord>().Wrong();
-                    m_InputIndex--;
+                    m_InputIndexList[CurrentIndex]--;
                     return;
                 }
 
-                m_Input = m_Input.Remove(m_Input.Length - 1);
+                m_InputList[CurrentIndex] = m_InputList[CurrentIndex].Remove(m_InputList[CurrentIndex].Length - 1);
                 Debug.Log(_input);
                 TempInput.GetComponent<InputWord>().Wrong();
-                m_InputIndex--;
+                m_InputIndexList[CurrentIndex]--;
                 return;
             }
 
-            if(m_InputIndex >= m_Answer.Answer.Length)
+            if(m_InputIndexList[CurrentIndex] >= m_Answer.Answer.Length)
             {
                 return;
             }
-            TempInput = GameObject.Find(m_Answer.Answer + " " + m_InputIndex);
+            TempInput = GameObject.Find(m_Answer.Answer + " " + m_InputIndexList[CurrentIndex]);
 
             var temp = CheckCross();
 
@@ -186,25 +194,25 @@ public class InputMgr : MonoBehaviour
                     Debug.Log(var_string);
                     TempInput.GetComponent<InputWord>().Input(var_string);
                     temp.GetComponent<InputWord>().Input(var_string);
-                    m_InputIndex++;
+                    m_InputIndexList[CurrentIndex]++;
                     m_IsInput = true;
-                    m_Input += string.Join("", var_string);
+                    m_InputList[CurrentIndex] += string.Join("", var_string);
                     return;
                 }
                 Debug.Log(_input);
                 TempInput.GetComponent<InputWord>().Input(_input);
                 temp.GetComponent<InputWord>().Input(_input);
-                m_InputIndex++;
+                m_InputIndexList[CurrentIndex]++;
                 m_IsInput = true;
-                m_Input += string.Join("", _input);
+                m_InputList[CurrentIndex] += string.Join("", _input);
                 return;
             }
 
             Debug.Log(_input);
             TempInput.GetComponent<InputWord>().Input(_input);
-            m_InputIndex++;
+            m_InputIndexList[CurrentIndex]++;
             m_IsInput = true;
-            m_Input += string.Join("", _input);
+            m_InputList[CurrentIndex] += string.Join("", _input);
             return;
         }
     }
@@ -239,13 +247,13 @@ public class InputMgr : MonoBehaviour
         return null;
     }
 
-    IEnumerator DiffuseEffect()
+    void DiffuseEffect()
     {
         if(Correct.IsActive())
         { // 정답 이펙트
             while (Correct.color.a > 0f)
             {
-                Correct.color -= new Color(0, 0, 0, 0.02f * Time.deltaTime);
+                Correct.color -= new Color(0, 0, 0, 0.04f * Time.deltaTime);
             }
             m_IsCheck = false;
 
@@ -261,7 +269,7 @@ public class InputMgr : MonoBehaviour
         { // 오답 이펙트
             while (Wrong.color.a > 0f)
             {
-                Wrong.color -= new Color(0, 0, 0, 0.02f * Time.deltaTime);
+                Wrong.color -= new Color(0, 0, 0, 0.04f * Time.deltaTime);
             }
             m_IsCheck = false;
             RESET();
@@ -270,7 +278,7 @@ public class InputMgr : MonoBehaviour
             m_IsClicked = true;
             HighLight();
         }
-        yield return null;
+        return;
     }
 
     private void FixedUpdate()
@@ -278,7 +286,7 @@ public class InputMgr : MonoBehaviour
         if (m_Power)
         {
             // 시작했을때 한번만
-            if (!m_IsStart)
+            if (!m_IsList)
             {
                 WordManager = GameObject.Find("WordMgr");
             }
@@ -294,6 +302,15 @@ public class InputMgr : MonoBehaviour
                 else if (!m_IsEnd)
                 {
                     Timer();
+                    ////////////////////
+                    if(Input.GetKeyDown(KeyCode.LeftArrow))
+                    {
+                        Prev();
+                    }
+                    if(Input.GetKeyDown(KeyCode.RightArrow))
+                    {
+                        Next();
+                    }
                 }
                 if(Start.color.a <= 0)
                 {
@@ -308,7 +325,7 @@ public class InputMgr : MonoBehaviour
 
             if (m_IsCheck)
             {
-                StartCoroutine(DiffuseEffect());
+                DiffuseEffect();
             }
         }
     }
@@ -319,9 +336,9 @@ public class InputMgr : MonoBehaviour
         { // 모든 정답을 맞춘 상황
             Debug.Log("게임 종료");
             m_Score = (int)(m_CurrentTime);
-            SaveRecord();
             m_IsEnd = true;
             Congratulations.gameObject.SetActive(true);
+            WinTime.text = ((int)m_CurrentTime).ToString() + " 초";
             return;
         }
         if(m_CurrentTime >= MaxTime)
@@ -330,6 +347,7 @@ public class InputMgr : MonoBehaviour
             m_IsEnd = true;
             // 게임 시작 화면으로
             TimeOver.gameObject.SetActive(true);
+            OverCount.text = m_DoneList.Count.ToString() + " 개";
             return;
         }
         m_CurrentTime += Time.deltaTime;
@@ -341,9 +359,12 @@ public class InputMgr : MonoBehaviour
         if (m_Power)
         {
             // 시작했을때 한번만
-            if (!m_IsStart)
+            if (!m_IsList)
             {
+                CrossManager = GameObject.Find("CrossMgr");
+                CrossManager.GetComponent<CrossWord>().SetRandomList(MaxCount);
                 WordManager = GameObject.Find("WordMgr");
+                m_IsList = true;
             }
             // 처음 한번만 단어 목록 생성
             if (m_WordList.Count <= 0 && WordManager.GetComponent<WordMgr>().IsMake)
@@ -352,6 +373,8 @@ public class InputMgr : MonoBehaviour
                 for (int i = 0; i < temp.Length; i++)
                 {
                     m_WordList.Add(temp[i]);
+                    m_InputList.Add("");
+                    m_InputIndexList.Add(0);
                 }
                 m_MaxCount = m_WordList.Count;
             }
@@ -361,15 +384,17 @@ public class InputMgr : MonoBehaviour
             // 표를 눌렀을 때
             if (m_IsClicked)
             {
-                if (m_IsInput && m_Input.Length == m_Answer.Answer.Length)
+                if (m_IsInput && m_InputList[CurrentIndex].Length == m_Answer.Answer.Length)
                 {
-                    if (m_Input == m_Answer.Answer)
+                    if (m_InputList[CurrentIndex] == m_Answer.Answer)
                     {
                         // 정답
                         Correct.gameObject.SetActive(true);
                         SetCorrect();
                         m_DoneList.Add(m_Answer);
                         m_WordList.Remove(m_Answer);
+                        m_InputList.Remove(m_Answer.Answer);
+                        m_InputIndexList.Remove(m_Answer.Length);
                         m_IsCheck = true;
                     }
                     else
@@ -379,6 +404,8 @@ public class InputMgr : MonoBehaviour
                         m_IsCheck = true;
                         for (int i = 0; i < m_Answer.Answer.Length; i++)
                         {
+                            m_InputIndexList[CurrentIndex] = 0;
+                            m_InputList[CurrentIndex] = "";
                             TempInput = GameObject.Find(m_Answer.Answer + " " + i);
                             TempInput.GetComponent<InputWord>().Wrong();
                             var temp = CheckCross();
@@ -408,11 +435,15 @@ public class InputMgr : MonoBehaviour
         {
             m_Answer = m_WordList[index + 1];
             CurrentHint.text = m_Answer.Meaning;
+            CurrentIndex = index + 1;
         }
         HighLight();
-        var temp = GameObject.Find(m_Answer.Answer + " 0");
-        Vector3 Pos = new Vector3(-temp.transform.localPosition.y - 200, temp.transform.localPosition.x + 200, 0);
-        RectScroll.transform.localPosition = Pos;
+        if(Assistant)
+        {
+            var temp = GameObject.Find(m_Answer.Answer + " 0");
+            Vector3 Pos = new Vector3(-temp.transform.localPosition.y - 340, temp.transform.localPosition.x + 250, 0);
+            RectScroll.transform.localPosition = Pos;
+        }
         m_IsClicked = true;
     }
 
@@ -424,11 +455,15 @@ public class InputMgr : MonoBehaviour
         {
             m_Answer = m_WordList[index - 1];
             CurrentHint.text = m_Answer.Meaning;
+            CurrentIndex = index - 1;
         }
         HighLight();
-        var temp = GameObject.Find(m_Answer.Answer + " 0");
-        Vector3 Pos = new Vector3(-temp.transform.localPosition.y - 200, temp.transform.localPosition.x + 200, 0);
-        RectScroll.transform.localPosition = Pos;
+        if (Assistant)
+        {
+            var temp = GameObject.Find(m_Answer.Answer + " 0");
+            Vector3 Pos = new Vector3(-temp.transform.localPosition.y - 340, temp.transform.localPosition.x + 250, 0);
+            RectScroll.transform.localPosition = Pos;
+        }
         m_IsClicked = true;
     }
 
@@ -447,6 +482,7 @@ public class InputMgr : MonoBehaviour
             if (m_WordList[i].Answer == _answer)
             { // 정답 정보 입력
                 m_Answer = m_WordList[i];
+                CurrentIndex = i;
             }
         }
         Debug.Log(m_Answer.Answer);
@@ -487,8 +523,6 @@ public class InputMgr : MonoBehaviour
             }
         }
         m_IsClicked = false;
-        m_Input = "";
-        m_InputIndex = 0;
         m_IsInput = false;
         Correct.gameObject.SetActive(false);
         Wrong.gameObject.SetActive(false);
@@ -508,48 +542,6 @@ public class InputMgr : MonoBehaviour
         }
 
         return -1;
-    }
-
-    public void SetEasy()
-    {
-        m_Difficult = "Easy";
-        m_bEasy = true;
-        m_bNormal= false;
-        m_bHard = false;
-        MaxTime = 360;
-    }
-
-    public void SetNormal()
-    {
-        m_Difficult = "Normal";
-        m_bEasy = false;
-        m_bNormal = true;
-        m_bHard = false;
-        MaxTime = 100;
-    }
-
-    public void SetHard()
-    {
-        m_Difficult = "Hard";
-        m_bEasy = false;
-        m_bNormal = false;
-        m_bHard = true;
-        MaxTime = 60;
-    }
-
-    void SaveRecord()
-    {
-        if(PlayerPrefs.HasKey(m_Difficult))
-        {
-            if(PlayerPrefs.GetInt(m_Difficult) > m_Score)
-            {
-                PlayerPrefs.SetInt(m_Difficult, m_Score);
-            }
-        }
-        else
-        {
-            PlayerPrefs.SetInt(m_Difficult, m_Score);
-        }
     }
 
     public void Pause(bool power)

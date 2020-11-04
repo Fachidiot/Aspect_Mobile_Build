@@ -8,7 +8,7 @@ public class csvReader_ver2 : MonoBehaviour
     public string str_Filename;
 
     private static string FileName;
-    private const string m_Default_Filename = "Resource/WordList.csv";
+    private const string m_Default_Filename = "Resource/CatchitWord.csv";
     private static List<Word> m_WordList = new List<Word>();
 
     void Awake()
@@ -39,17 +39,17 @@ public class csvReader_ver2 : MonoBehaviour
             }
 
             if (m_bExample)
-            {
-                var var_Value = str_Data.Split();
-                if (var_Value.Length < 2)
-                    m_bExample = false;
+            { // 첫번째는 무조건 건너뜀
+                m_bExample = false;
                 continue;
             }
             else
             {
                 var var_Value = str_Data.Split(',');
 
-                tempword = new Word(var_Value[0].ToUpper(), var_Value[1].ToUpper());
+                var_Value[1] = var_Value[1].TrimStart();
+                var_Value[2] = var_Value[2].Replace("/", ",").TrimStart();
+                tempword = new Word(var_Value[1].ToUpper(), var_Value[2].ToUpper());
                 m_WordList.Add(tempword);
                 //Debug.Log(m_WordList.Last.Value.Answer + "추가 완료");
             }

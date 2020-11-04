@@ -18,15 +18,22 @@ public class InputWord : MonoBehaviour
 
     void Start()
     {
-        m_IsDouble = false;
-        Answer.text = "";
-        Mgr = GameObject.Find("InputMgr");
+        try
+        {
+            m_IsDouble = false;
+            Answer.text = "";
+            Mgr = GameObject.Find("InputMgr");
 
 
-        var temp = this.gameObject.name.Split(' ');
-        Answer.text = this.gameObject.name[int.Parse(temp[1])].ToString();
-        m_Answer = temp[0];
-        m_Index = int.Parse(temp[1]);
+            var temp = this.gameObject.name.Split(' ');
+            //Answer.text = this.gameObject.name[int.Parse(temp[1])].ToString();
+            m_Answer = temp[0];
+            m_Index = int.Parse(temp[1]);
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning(ex.Message);
+        }
     }
 
     public void ClickButton()

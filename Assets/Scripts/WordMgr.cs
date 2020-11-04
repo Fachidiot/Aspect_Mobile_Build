@@ -15,13 +15,19 @@ public class WordMgr : MonoBehaviour
     public int MaxY = 1030;
     [Header("Prefab")]
     public GameObject GridPrefab;
-    [Header("Word Count")]
-    [Range(5, 15)]
-    public int WordCount;
+    [Header("Grid Scaler")]
+    public GameObject Grid;
+
+
+    private int m_WordCount;
 
     // 생성될 위치
     private float MakeX;
     private float MakeY;
+
+    // Rect 크기 조절
+    private Vector2 RectMax;
+    private Vector2 RectMin;
 
     private List<GameObject> m_GridMakeList;
     private List<Word> m_WordList;
@@ -37,16 +43,18 @@ public class WordMgr : MonoBehaviour
     // 다음에 만들어줄 단어
     private Word m_TempWord;
     private bool m_bIsMake;
-    public bool IsMake { get { return m_bIsMake; }set { m_bIsMake = value; } }
+    public bool IsMake { get { return m_bIsMake; } set { m_bIsMake = value; } }
     // 더이상 단어를 못만들어줄때
     private bool m_bMakeAble;
     private bool m_bVertical;
     private int m_Reset;
     private int m_CurrentWordCount;
     private int safeloop;
+    private int m_RootSet;
 
     private void Awake()
     {
+        m_RootSet = 0;
         MakeX = StartX;
         MakeY = StartY;
         m_Reset = 0;
@@ -62,13 +70,21 @@ public class WordMgr : MonoBehaviour
 
     private void Update()
     {
-        if(m_WordList.Count <= 0)
+        if (m_WordList.Count <= 0)
         {
             m_WordList = GameObject.Find("CrossMgr").GetComponent<CrossWord>().GetList();
         }
 
         if (!m_bIsMake && m_WordList.Count > 0)
             Logic();
+
+        if(IsMake)
+        {
+            Grid.GetComponent<RectTransform>().sizeDelta = new Vector2(110 + RectMax.x - RectMin.x, 110 + RectMax.y - RectMin.y);
+            float tempx = (RectMax.x + RectMin.x) / 2;
+            float tempy = (RectMax.y + RectMin.y) / 2;
+            gameObject.transform.localPosition = new Vector3(-tempx, -tempy, 0);
+        }
     }
 
     void Logic()
@@ -83,9 +99,11 @@ public class WordMgr : MonoBehaviour
             return;
         }
         // 안전 탈출문
-        if (WordCount <= m_CurrentWordCount)
+        if (m_WordCount <= m_CurrentWordCount)
         {
-            Debug.Log("모든 단어가 완성 되었습니다!" + safeloop);
+            Debug.Log("모든 단어가 완성 되었습니다!");
+            Debug.Log(RectMin.x + ", " + RectMax.x);
+            Debug.Log(RectMin.y + ", " + RectMax.y);
             m_bIsMake = true;
             return;
         }
@@ -97,10 +115,6 @@ public class WordMgr : MonoBehaviour
 
         if (m_GridMakeList.Count <= 0 || !m_bMakeAble)
         {
-            //Debug.Log("Root Word 생성 시퀀스");
-            // 생성전 루트가 생성될 위치를 잡아준다.
-            SetRootPos();
-            
             // 만들어진 리스트가 없다.(처음 생성) or 더이상 만들어줄 단어가 없다.
             // 단어 생성
             RootSet();
@@ -112,24 +126,18 @@ public class WordMgr : MonoBehaviour
 
             if (!MakeRootCrossWord())
             {
-                try
+                if (m_Reset < m_MakeList.Count)
                 {
-                    if (m_Reset >= m_MakeList.Count)
-                    {
-                        m_bMakeAble = false;
-                        m_Reset = 0;
-                        return;
-                    }
                     var temp = GameObject.Find(m_MakeList[m_Reset].Answer + " " + 0.ToString());
                     MakeX = temp.transform.localPosition.x;
                     MakeY = temp.transform.localPosition.y;
                     m_MakeWord = m_MakeList[m_Reset];
                     m_Reset++;
+                    return;
                 }
-                catch (System.Exception ex)
-                {
-                    Debug.Log(ex.Message);
-                }
+                // 모든 단어를 순회 했을때
+                m_Reset = 0;
+                //m_bMakeAble = false;
             }
         }
     }
@@ -170,6 +178,22 @@ public class WordMgr : MonoBehaviour
             var temp = Instantiate(GridPrefab, this.gameObject.transform);
             m_GridMakeList.Add(temp);
             temp.transform.localPosition = new Vector3(MakeX, MakeY + 110 * i, 0);
+            if (RectMin.x > MakeX)
+            {
+                RectMin.x = MakeX;
+            }
+            if (RectMin.y > MakeY)
+            {
+                RectMin.y = MakeY;
+            }
+            if(RectMax.x < MakeX)
+            {
+                RectMax.x = MakeX;
+            }
+            if(RectMax.y < MakeY + 110 * i)
+            {
+                RectMax.y = MakeY + 110 * i;
+            }
             temp.name = m_MakeWord.Answer + " " + i;
             temp.tag = "Horizontal";
         }
@@ -184,6 +208,22 @@ public class WordMgr : MonoBehaviour
             var temp = Instantiate(GridPrefab, this.gameObject.transform);
             m_GridMakeList.Add(temp);
             temp.transform.localPosition = new Vector3(MakeX + 110 * i, MakeY, 0);
+            if (RectMin.x > MakeX)
+            {
+                RectMin.x = MakeX;
+            }
+            if (RectMin.y > MakeY)
+            {
+                RectMin.y = MakeY;
+            }
+            if (RectMax.x < MakeX + 110 * i)
+            {
+                RectMax.x = MakeX + 110 * i;
+            }
+            if (RectMax.y < MakeY)
+            {
+                RectMax.y = MakeY;
+            }
             temp.name = m_MakeWord.Answer + " " + i;
             temp.tag = "Vertical";
         }
@@ -199,7 +239,8 @@ public class WordMgr : MonoBehaviour
         templist.AddRange(GameObject.FindGameObjectsWithTag("Vertical"));
         templist.AddRange(GameObject.FindGameObjectsWithTag("Horizontal"));
 
-        for (int i = 0; i < templist.Count; i++)
+#pragma warning disable CS0162 // 접근할 수 없는 코드가 있습니다.
+        for (int index = 0; index < templist.Count; index++)
         {
             // 생성된 Grid를 가져온다.
             QuaterSection Section = new QuaterSection();
@@ -235,15 +276,22 @@ public class WordMgr : MonoBehaviour
             var num = Section.DisRank();
             //Debug.Log(num + " 분면에 가장 적은 단어가 생성되었습니다.");
 
+            if (m_RootSet >= MaxX / 100)
+            {
+                m_bIsMake = true;
+                Debug.LogWarning("더 이상 루트를 생성 할 수 없습니다.");
+                return;
+            }
             // 가장 적게 생성된면의 랜덤으로 좌표를 구한다.
-            MakeX += Section.GetX(num, Random.Range(-4, 4));
-            MakeY += Section.GetY(num, Random.Range(-4, 4));
+            MakeX = Section.GetX(num, m_RootSet);
+            MakeY = Section.GetY(num, m_RootSet);
+            m_RootSet++;
             return;
         }
     }
     bool CheckRoot()
     {
-        if (!CheckQuater(true))
+        if (!CheckQuater2(true))
         {
             return false;
         }
@@ -334,7 +382,7 @@ public class WordMgr : MonoBehaviour
     }
     bool CheckCrossHorizontal(bool first = true)
     {
-        if (!CheckQuater(m_bVertical))
+        if (!CheckQuater2(false))
         {
             return false;
         }
@@ -368,7 +416,7 @@ public class WordMgr : MonoBehaviour
                     return false;
                 }
 
-                if(j < m_TempWord.Length)
+                if (j < m_TempWord.Length)
                 {
                     // y축으로 이동하며 위아래가 비어있는지 확인
                     //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX + 110, MakeY + (j * 110), 0));
@@ -442,7 +490,7 @@ public class WordMgr : MonoBehaviour
     }
     bool CheckCrossVertical(bool first = true)
     {
-        if (!CheckQuater(m_bVertical))
+        if (!CheckQuater2(true))
         {
             return false;
         }
@@ -477,7 +525,7 @@ public class WordMgr : MonoBehaviour
                     return false;
                 }
 
-                if(j < m_TempWord.Length)
+                if (j < m_TempWord.Length)
                 {
                     // y축으로 이동하며 위아래가 비어있는지 확인
                     //Debug.Log(templist[i].transform.localPosition + " 와 비교 " + new Vector3(MakeX + 110, MakeY + (j * 110), 0));
@@ -504,7 +552,7 @@ public class WordMgr : MonoBehaviour
     // 루트가 될 단어를 생성해줌
     void RootSet()
     {
-        if (m_CurrentWordCount >= WordCount)
+        if (m_CurrentWordCount >= m_WordCount)
         {
             safeloop = 0;
             m_bMakeAble = false;
@@ -539,9 +587,7 @@ public class WordMgr : MonoBehaviour
         //    MakeY = temp.transform.localPosition.y;
         //}
 
-        m_bVertical = true;
-
-        if(m_CurrentWordCount == 0)
+        if (m_CurrentWordCount == 0)
         {
             Debug.Log("Root Word " + m_MakeWord.Answer + " 단어를 생성합니다.");
             // 생성해준다.
@@ -561,6 +607,7 @@ public class WordMgr : MonoBehaviour
             UseWord(m_MakeWord);
             // 다음 단어는 Horizontal임을 표시
             m_bMakeAble = true;
+            m_RootSet = 0;
             return;
         }
         else
@@ -577,13 +624,19 @@ public class WordMgr : MonoBehaviour
     // 루트에 교차되는 단어를 생성
     bool MakeRootCrossWord()
     {
-        m_bVertical = !m_bVertical;
+        if(GameObject.Find(m_MakeWord.Answer + " " + 0).tag == "Horizontal")
+        {
+            m_bVertical = true;
+        }
+        else
+        {
+            m_bVertical = false;
+        }
         Debug.Log(m_bVertical + " Cross Word 생성 시퀀스");
         // 단어 찾기 전 만들수 있는지 여부
-        if (m_CurrentWordCount >= WordCount)
+        if (m_CurrentWordCount >= m_WordCount)
         {
             safeloop = 0;
-            m_bMakeAble = false;
             return false;
         }
 
@@ -636,7 +689,7 @@ public class WordMgr : MonoBehaviour
 
                             if (CheckCrossVertical())
                             {
-                                Debug.Log("Vertical "+ m_TempWord.Answer + " 단어를 생성합니다. with " + m_MakeWord.Answer + " Index : " + _1 + ", " + _2);
+                                Debug.Log("Vertical " + m_TempWord.Answer + " 단어를 생성합니다. with " + m_MakeWord.Answer + " Index : " + _1 + ", " + _2);
                                 m_MakeWord.m_bIsOpen[_1] = false;
                                 m_TempWord.m_bIsOpen[_2] = false;
                                 // 다음 생성될 단어의 위치도 저장해준다.
@@ -717,7 +770,7 @@ public class WordMgr : MonoBehaviour
                 MaxY = _4;
             }
         }
-        
+
         //public IntQuater Section1_MinMax;
         //public IntQuater Section2_MinMax;
         //public IntQuater Section3_MinMax;
@@ -778,11 +831,11 @@ public class WordMgr : MonoBehaviour
         }
         public int DisRank()
         {
-            if(Section2 < Section3)
+            if (Section2 < Section3)
             {
-                if(Section2 < Section1)
+                if (Section2 < Section1)
                 {
-                    if(Section2 < Section4)
+                    if (Section2 < Section4)
                     {
                         return 2;
                     }
@@ -793,7 +846,7 @@ public class WordMgr : MonoBehaviour
                 }
                 else
                 {
-                    if(Section1 < Section4)
+                    if (Section1 < Section4)
                     {
                         return 1;
                     }
@@ -873,9 +926,9 @@ public class WordMgr : MonoBehaviour
             { // x 음수
                 if (StartX < MinX + 110)
                 {
-                    if(StartY < 0)
+                    if (StartY < 0)
                     { // y 음수
-                        if(StartY < MinY + 110)
+                        if (StartY < MinY + 110)
                         {
                             return true;
                         }
@@ -883,7 +936,7 @@ public class WordMgr : MonoBehaviour
                     }
                     else
                     { // y 양수
-                        if(StartY < MaxY - 110)
+                        if (StartY < MaxY - 110)
                         {
                             return true;
                         }
@@ -966,6 +1019,73 @@ public class WordMgr : MonoBehaviour
             }
         }
     }
+    bool CheckQuater2(bool vertical)
+    {
+        if (vertical)
+        {
+            if(MakeX > MinX)
+            {
+                if(MakeX + m_MakeWord.Length * 110 < MaxX)
+                {
+                    if(MakeY > MinY)
+                    {
+                        if (MakeY < MaxY)
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            if (MakeX > MinX)
+            {
+                if (MakeX < MaxX)
+                {
+                    if (MakeY > MinY)
+                    {
+                        if (MakeY + m_MakeWord.Length * 110 < MaxY)
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+    }
 
     public void RESET()
     {
@@ -974,6 +1094,8 @@ public class WordMgr : MonoBehaviour
         Debug.Log("Reset Make");
         MakeX = StartX;
         MakeY = StartY;
+        RectMin = new Vector2();
+        RectMax = new Vector2();
         m_Reset = 5;
         safeloop = 0;
         m_CurrentWordCount = 0;
@@ -1024,18 +1146,8 @@ public class WordMgr : MonoBehaviour
         return false;
     }
 
-    public void SetEasy()
+    public void SetCount(int _count)
     {
-        WordCount = 5;
-    }
-
-    public void SetNormal()
-    {
-        WordCount = 10;
-    }
-
-    public void SetHard()
-    {
-        WordCount = 15;
+        m_WordCount = _count;
     }
 }
