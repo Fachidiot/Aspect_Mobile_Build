@@ -13,16 +13,83 @@ public class GridMgr : MonoBehaviour
     private List<Word> m_WordList;
     private List<Word> m_TempList;
     private List<Word> m_MainList = new List<Word>();
+    // Count Word List
+    private List<Word> m_3List = new List<Word>();
+    private List<Word> m_4List = new List<Word>();
+    private List<Word> m_5List = new List<Word>();
+    private List<Word> m_6List = new List<Word>();
+    private List<Word> m_7List = new List<Word>();
+    private List<Word> m_8List = new List<Word>();
+    private List<Word> m_9List = new List<Word>();
+    private List<Word> m_10List = new List<Word>();
+    private List<Word> m_11List = new List<Word>();
+    private List<Word> m_12List = new List<Word>();
+    private List<Word> m_13List = new List<Word>();
+    private List<Word> m_14List = new List<Word>();
     private bool[,] temp = new bool[5, 5];
     private List<GameObject> ObjList = new List<GameObject>();
 
     private void Start()
     {
-        //m_WordList = csvReader_ver2.GetList();
-        //for (int i = 0; i < m_WordList.Count; i++)
-        //{
-        //    CheckCross(i);
-        //}
+        m_WordList = csvReader_ver2.GetList();
+        for (int i = 0; i < m_WordList.Count; i++)
+        {
+            switch (m_WordList[i].Length)
+            {
+                case 3:
+                    m_3List.Add(m_WordList[i]);
+                    break;
+                case 4:
+                    m_4List.Add(m_WordList[i]);
+                    break;
+                case 5:
+                    m_5List.Add(m_WordList[i]);
+                    break;
+                case 6:
+                    m_6List.Add(m_WordList[i]);
+                    break;
+                case 7:
+                    m_7List.Add(m_WordList[i]);
+                    break;
+                case 8:
+                    m_8List.Add(m_WordList[i]);
+                    break;
+                case 9:
+                    m_9List.Add(m_WordList[i]);
+                    break;
+                case 10:
+                    m_10List.Add(m_WordList[i]);
+                    break;
+                case 11:
+                    m_11List.Add(m_WordList[i]);
+                    break;
+                case 12:
+                    m_12List.Add(m_WordList[i]);
+                    break;
+                case 13:
+                    m_13List.Add(m_WordList[i]);
+                    break;
+                case 14:
+                    m_14List.Add(m_WordList[i]);
+                    break;
+                default:
+                    Debug.LogError("새로운 리스트 생성필요");
+                    break;
+            }
+        }
+        
+        Debug.Log(m_3List.Count);
+        Debug.Log(m_4List.Count);
+        Debug.Log(m_5List.Count);
+        Debug.Log(m_6List.Count);
+        Debug.Log(m_7List.Count);
+        Debug.Log(m_8List.Count);
+        Debug.Log(m_9List.Count);
+        Debug.Log(m_10List.Count);
+        Debug.Log(m_11List.Count);
+        Debug.Log(m_12List.Count);
+        Debug.Log(m_13List.Count);
+        Debug.Log(m_14List.Count);
     }
 
     void SaveMapData()
@@ -127,7 +194,7 @@ public class GridMgr : MonoBehaviour
                     }
                     break;
                 default:
-                    Debug.LogWarning("예상치 못한 데이터");
+                    Debug.LogWarning("예상치 못한 데이터 ㄴㅇㄱ");
                     break;
             }
         }
@@ -141,7 +208,8 @@ public class GridMgr : MonoBehaviour
     {
         for (int i = 0; i < tempGrid.WordCrossList.Count; i++)
         {
-            if (int.Parse(tempGrid.WordCrossList[i]) == -1)
+            var var_int = tempGrid.WordCrossList[i];
+            if (var_int[0] == -1)
             { // 겹치는 단어가 없을때의 단어 처리
                 m_TempList = PeekList(tempGrid.WordLenghtList[i]); // 같은 길이의 단어를 뽑습니다.
                 int index = Random.Range(0, m_TempList.Count);
@@ -169,7 +237,7 @@ public class GridMgr : MonoBehaviour
                     { // 겹치는 단어가 1개
                         temp_list1 = PeekList(tempGrid.WordLenghtList[i + 1]);
                         MaxCount = temp_list1.Count;
-                        while (true)
+                        while (find)
                         { // 같은 인덱스에서 같은 단어로 겹치는 단어가 뽑힐때까지
                             // 비상 탈출문
                             if (temp_list1.Count <= 0)
@@ -211,7 +279,7 @@ public class GridMgr : MonoBehaviour
                         temp_list1 = PeekList(tempGrid.WordLenghtList[i + 1]);
                         temp_list2 = PeekList(tempGrid.WordLenghtList[i + 2]);
                         MaxCount = temp_list1.Count * temp_list2.Count;
-                        while (true)
+                        while (find)
                         { // 같은 인덱스에서 같은 단어로 겹치는 단어가 뽑힐때까지
                             // 비상 탈출문
                             if (temp_list1.Count <= 0 || temp_list2.Count <= 0)
@@ -264,7 +332,7 @@ public class GridMgr : MonoBehaviour
                         temp_list2 = PeekList(tempGrid.WordLenghtList[i + 2]);
                         temp_list3 = PeekList(tempGrid.WordLenghtList[i + 3]);
                         MaxCount = temp_list1.Count * temp_list2.Count * temp_list3.Count;
-                        while (true)
+                        while (find)
                         { // 같은 인덱스에서 같은 단어로 겹치는 단어가 뽑힐때까지
                             // 비상 탈출문
                             if (temp_list1.Count <= 0 || temp_list2.Count <= 0 || temp_list3.Count <= 0)
@@ -385,7 +453,7 @@ public class GridMgr : MonoBehaviour
                     //temp.name = m_MakeWord.Answer + " " + i;
                     temp.tag = "Horizontal";
                     ObjList.Add(temp);
-                    temp.transform.localPosition = new Vector3(110 * i, 110 * j, 0);
+                    temp.transform.localPosition = new Vector3((110 * i) - 500, (110 * j) - 500, 0);
                 }
             }
         }
@@ -406,105 +474,30 @@ public class GridMgr : MonoBehaviour
     {
         DeleteObj();
         MakeGrid(LoadMapData("Scripts/Grid/Grid1.csv"));
-        m_WordList = csvReader_ver2.GetList();
-        List<Word> temp = new List<Word>();
-        List<int> Array = new List<int>();
-        for (int i = 0; i < tempGrid.WordLenghtList.Count; i++)
-        {
-            if (Array.Contains(tempGrid.WordLenghtList[i]))
-                continue;
-            temp.AddRange(PeekList(tempGrid.WordLenghtList[i]));
-            Array.Add(tempGrid.WordLenghtList[i]);
-        }
-        m_WordList = temp;
-        for (int i = 0; i < m_WordList.Count; i++)
-        {
-            CheckCross(i);
-        }
         PutData();
     }
     public void MakeGrid2()
     {
         DeleteObj();
         MakeGrid(LoadMapData("Scripts/Grid/Grid2.csv"));
-        m_WordList = csvReader_ver2.GetList();
-        List<Word> temp = new List<Word>();
-        List<int> Array = new List<int>();
-        for (int i = 0; i < tempGrid.WordLenghtList.Count; i++)
-        {
-            if (Array.Contains(tempGrid.WordLenghtList[i]))
-                continue;
-            temp.AddRange(PeekList(tempGrid.WordLenghtList[i]));
-            Array.Add(tempGrid.WordLenghtList[i]);
-        }
-        m_WordList = temp;
-        for (int i = 0; i < m_WordList.Count; i++)
-        {
-            CheckCross(i);
-        }
         PutData();
     }
     public void MakeGrid3()
     {
         DeleteObj();
         MakeGrid(LoadMapData("Scripts/Grid/Grid3.csv"));
-        m_WordList = csvReader_ver2.GetList();
-        List<Word> temp = new List<Word>();
-        List<int> Array = new List<int>();
-        for (int i = 0; i < tempGrid.WordLenghtList.Count; i++)
-        {
-            if (Array.Contains(tempGrid.WordLenghtList[i]))
-                continue;
-            temp.AddRange(PeekList(tempGrid.WordLenghtList[i]));
-            Array.Add(tempGrid.WordLenghtList[i]);
-        }
-        m_WordList = temp;
-        for (int i = 0; i < m_WordList.Count; i++)
-        {
-            CheckCross(i);
-        }
         PutData();
     }
     public void MakeGrid4()
     {
         DeleteObj();
         MakeGrid(LoadMapData("Scripts/Grid/Grid4.csv"));
-        m_WordList = csvReader_ver2.GetList();
-        List<Word> temp = new List<Word>();
-        List<int> Array = new List<int>();
-        for (int i = 0; i < tempGrid.WordLenghtList.Count; i++)
-        {
-            if (Array.Contains(tempGrid.WordLenghtList[i]))
-                continue;
-            temp.AddRange(PeekList(tempGrid.WordLenghtList[i]));
-            Array.Add(tempGrid.WordLenghtList[i]);
-        }
-        m_WordList = temp;
-        for (int i = 0; i < m_WordList.Count; i++)
-        {
-            CheckCross(i);
-        }
         PutData();
     }
     public void MakeGrid5()
     {
         DeleteObj();
         MakeGrid(LoadMapData("Scripts/Grid/Grid5.csv"));
-        m_WordList = csvReader_ver2.GetList();
-        List<Word> temp = new List<Word>();
-        List<int> Array = new List<int>();
-        for (int i = 0; i < tempGrid.WordLenghtList.Count; i++)
-        {
-            if (Array.Contains(tempGrid.WordLenghtList[i]))
-                continue;
-            temp.AddRange(PeekList(tempGrid.WordLenghtList[i]));
-            Array.Add(tempGrid.WordLenghtList[i]);
-        }
-        m_WordList = temp;
-        for (int i = 0; i < m_WordList.Count; i++)
-        {
-            CheckCross(i);
-        }
         PutData();
     }
 }
