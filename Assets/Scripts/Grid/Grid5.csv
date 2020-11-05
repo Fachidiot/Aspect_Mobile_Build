@@ -1,0 +1,16 @@
+Grid
+10
+true,true,true,true,true,true,false,false,true,false
+false,true,false,false,false,false,true,false,true,false
+false,true,true,true,true,true,true,false,true,false
+false,true,false,false,false,false,true,false,true,false
+false,true,false,false,false,false,true,false,true,false
+false,true,false,true,true,true,true,false,true,false
+false,true,false,false,false,false,false,false,true,false
+true,true,true,true,true,true,true,true,true,false
+false,false,false,false,true,false,false,false,true,false
+true,true,true,true,true,true,false,false,true,false
+WordLengthList
+6,8,6,5,4,9,3,6,10
+WordCrossList
+1,2/7,0/5,1/4,3,1/4/8,0/2,4,7

@@ -1,0 +1,11 @@
+Grid
+5
+False,True,True,True,False
+True,False,True,False,True
+True,False,True,False,True
+True,True,True,True,True
+True,False,False,False,True
+WordLengthList
+4,5,4,3,4
+WordCrossList
+2,0/2/4,0/3,1,2

@@ -22,9 +22,6 @@ public class Word
 
     // 인덱스의 열린값
     public bool[] m_bIsOpen;
-
-    private string[,] n_IndexInfo;
-    public string[,] nIndexInfo { get { return n_IndexInfo; } set { n_IndexInfo = value; } }
     
     // 생성자
     public Word(string _answ = "", string _mean = "")
