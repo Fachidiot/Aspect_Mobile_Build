@@ -1,10 +1,10 @@
 Grid
 5
-False,True,True,True,False
-True,False,True,False,True
-True,False,True,False,True
-True,True,True,True,True
-True,False,False,False,True
+0,4,3&4,4,0
+1,0,3,0,5
+1,0,3,0,5
+1&2,2,2&3,2,2&5
+1,0,0,0,5
 WordLengthList
 4,5,4,3,4
 WordCrossList

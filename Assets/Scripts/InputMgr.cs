@@ -262,7 +262,7 @@ public class InputMgr : MonoBehaviour
             // 문제를 맞혔을때만 다음으로 넘어가거나 뒤로 돌아가게 해줘야함
             if(Assistant)
             {
-                Next();
+                Next(true);
             }
         }
         else
@@ -382,42 +382,53 @@ public class InputMgr : MonoBehaviour
             QuestionCount.text = (m_DoneList.Count + " / " + m_MaxCount);
 
             // 표를 눌렀을 때
-            if (m_IsClicked)
+            if(!m_IsEnd)
             {
-                if (m_IsInput && m_InputList[CurrentIndex].Length == m_Answer.Answer.Length)
+                if (m_IsClicked)
                 {
-                    if (m_InputList[CurrentIndex] == m_Answer.Answer)
+                    if (m_IsInput && m_InputList[CurrentIndex].Length == m_Answer.Answer.Length)
                     {
-                        // 정답
-                        Correct.gameObject.SetActive(true);
-                        SetCorrect();
-                        m_DoneList.Add(m_Answer);
-                        m_WordList.Remove(m_Answer);
-                        m_InputList.Remove(m_Answer.Answer);
-                        m_InputIndexList.Remove(m_Answer.Length);
-                        m_IsCheck = true;
-                    }
-                    else
-                    {
-                        // 오답
-                        Wrong.gameObject.SetActive(true);
-                        m_IsCheck = true;
-                        for (int i = 0; i < m_Answer.Answer.Length; i++)
+                        if (m_InputList[CurrentIndex] == m_Answer.Answer)
                         {
-                            m_InputIndexList[CurrentIndex] = 0;
-                            m_InputList[CurrentIndex] = "";
-                            TempInput = GameObject.Find(m_Answer.Answer + " " + i);
-                            TempInput.GetComponent<InputWord>().Wrong();
-                            var temp = CheckCross();
-                            if (temp != null)
+                            // 정답
+                            Correct.gameObject.SetActive(true);
+                            SetCorrect();
+                            m_DoneList.Add(m_Answer);
+                            int index = FindWord(m_Answer);
+                            Word TempWord = m_WordList[index + 1];
+                            m_WordList.Remove(m_Answer);
+                            m_InputList.Remove(m_Answer.Answer);
+                            m_InputIndexList.Remove(m_Answer.Length);
+                            if (Assistant)
                             {
-                                if (temp.GetComponent<InputWord>().IsCorrect)
+                                m_Answer = TempWord;
+                                index = FindWord(m_Answer);
+                                CurrentIndex = index;
+                            }
+                            m_IsCheck = true;
+                        }
+                        else
+                        {
+                            // 오답
+                            Wrong.gameObject.SetActive(true);
+                            m_IsCheck = true;
+                            for (int i = 0; i < m_Answer.Answer.Length; i++)
+                            {
+                                m_InputIndexList[CurrentIndex] = 0;
+                                m_InputList[CurrentIndex] = "";
+                                TempInput = GameObject.Find(m_Answer.Answer + " " + i);
+                                TempInput.GetComponent<InputWord>().Wrong();
+                                var temp = CheckCross();
+                                if (temp != null)
                                 {
-                                    TempInput.GetComponent<InputWord>().Input(temp.GetComponent<InputWord>().GetInput());
-                                }
-                                else
-                                {
-                                    temp.GetComponent<InputWord>().Wrong();
+                                    if (temp.GetComponent<InputWord>().IsCorrect)
+                                    {
+                                        TempInput.GetComponent<InputWord>().Input(temp.GetComponent<InputWord>().GetInput());
+                                    }
+                                    else
+                                    {
+                                        temp.GetComponent<InputWord>().Wrong();
+                                    }
                                 }
                             }
                         }
@@ -427,15 +438,28 @@ public class InputMgr : MonoBehaviour
         }
     }
 
-    public void Next()
+    public void Next(bool auto = false)
     {
-        RESET();
-        int index = FindWord(m_Answer);
-        if(index < m_WordList.Count - 1)
+        if(auto)
         {
-            m_Answer = m_WordList[index + 1];
+            RESET();
             CurrentHint.text = m_Answer.Meaning;
-            CurrentIndex = index + 1;
+        }
+        else
+        {
+            RESET();
+            int index = FindWord(m_Answer);
+            if (index < m_WordList.Count - 1)
+            {
+                m_Answer = m_WordList[index + 1];
+                index = FindWord(m_Answer);
+                CurrentHint.text = m_Answer.Meaning;
+                CurrentIndex = index;
+            }
+            else
+            {
+                return;
+            }
         }
         HighLight();
         if(Assistant)
@@ -454,8 +478,13 @@ public class InputMgr : MonoBehaviour
         if (index > 0)
         {
             m_Answer = m_WordList[index - 1];
+            index = FindWord(m_Answer);
             CurrentHint.text = m_Answer.Meaning;
-            CurrentIndex = index - 1;
+            CurrentIndex = index;
+        }
+        else
+        {
+            return;
         }
         HighLight();
         if (Assistant)

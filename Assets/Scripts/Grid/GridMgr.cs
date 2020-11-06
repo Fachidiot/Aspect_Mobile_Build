@@ -11,8 +11,7 @@ public class GridMgr : MonoBehaviour
     private GridInfo tempGrid;
     private Word m_TempWord;
     private List<Word> m_WordList;
-    private List<Word> m_TempList;
-    private List<Word> m_MainList = new List<Word>();
+    private List<Word> m_MainList;
     // Count Word List
     private List<Word> m_3List = new List<Word>();
     private List<Word> m_4List = new List<Word>();
@@ -27,9 +26,25 @@ public class GridMgr : MonoBehaviour
     private List<Word> m_13List = new List<Word>();
     private List<Word> m_14List = new List<Word>();
     private bool[,] temp = new bool[5, 5];
-    private List<GameObject> ObjList = new List<GameObject>();
+    private List<GameObject> m_ObjList = new List<GameObject>();
 
     private void Start()
+    {        
+        //Debug.Log(m_3List.Count);
+        //Debug.Log(m_4List.Count);
+        //Debug.Log(m_5List.Count);
+        //Debug.Log(m_6List.Count);
+        //Debug.Log(m_7List.Count);
+        //Debug.Log(m_8List.Count);
+        //Debug.Log(m_9List.Count);
+        //Debug.Log(m_10List.Count);
+        //Debug.Log(m_11List.Count);
+        //Debug.Log(m_12List.Count);
+        //Debug.Log(m_13List.Count);
+        //Debug.Log(m_14List.Count);
+    }
+
+    void ListSet()
     {
         m_WordList = csvReader_ver2.GetList();
         for (int i = 0; i < m_WordList.Count; i++)
@@ -77,19 +92,7 @@ public class GridMgr : MonoBehaviour
                     break;
             }
         }
-        
-        Debug.Log(m_3List.Count);
-        Debug.Log(m_4List.Count);
-        Debug.Log(m_5List.Count);
-        Debug.Log(m_6List.Count);
-        Debug.Log(m_7List.Count);
-        Debug.Log(m_8List.Count);
-        Debug.Log(m_9List.Count);
-        Debug.Log(m_10List.Count);
-        Debug.Log(m_11List.Count);
-        Debug.Log(m_12List.Count);
-        Debug.Log(m_13List.Count);
-        Debug.Log(m_14List.Count);
+
     }
 
     void SaveMapData()
@@ -173,7 +176,7 @@ public class GridMgr : MonoBehaviour
                         var var_Value1 = str_Data.Split(',');
                         for (int j = 0; j < WordCount; j++)
                         {
-                            temp_grid.Grid[i, j] = bool.Parse(var_Value1[j]);
+                            temp_grid.Grid[i, j] = var_Value1[j];
                         }
                     }
                     break;
@@ -204,182 +207,258 @@ public class GridMgr : MonoBehaviour
         return temp_grid;
     }
 
-    void PutData()
+    void PushData()
     {
-        for (int i = 0; i < tempGrid.WordCrossList.Count; i++)
+        ListSet();
+        m_MainList = new List<Word>();
+        char[] PrevCross = new char[0];
+        int[] PrevIndex = new int[0];
+        for (int i = 0; i < tempGrid.WordLenghtList.Count; i++)
         {
-            var var_int = tempGrid.WordCrossList[i];
-            if (var_int[0] == -1)
-            { // 겹치는 단어가 없을때의 단어 처리
-                m_TempList = PeekList(tempGrid.WordLenghtList[i]); // 같은 길이의 단어를 뽑습니다.
-                int index = Random.Range(0, m_TempList.Count);
-                m_WordList.Add(m_TempList[index]); // 단어를 추가해준다.
-                m_WordList.Remove(m_TempList[index]); // 단어를 사용했으니 삭제해준다.
-            }
-            else
-            { // 겹치는 단어가 있을때의 단어 처리
-                var temp = tempGrid.WordCrossList[i].Split('/');
-                bool find = true;
-                m_TempList = PeekList(tempGrid.WordLenghtList[i]); // 같은 길이의 단어를 뽑습니다.
-
-                while (find)
+            bool jump = false;
+            var TempList = GetList(tempGrid.WordLenghtList[i]);
+            var CrossInfo = tempGrid.WordCrossList[i].Split('/');
+            if (PrevCross.Length != 0)
+            {
+                int count = 0;
+                for (int j = 0; j < TempList.Count; j++)
                 {
-                    int index = Random.Range(0, m_TempList.Count);
-                    m_TempWord = m_TempList[index];
+                    count = 0;
+                    if(PrevCross.Length == 1)
+                    {
+                        if (TempList[j].Answer[PrevIndex[0]] == PrevCross[0]) // 3개 이상 겹칠때는 예외처리 필요함
+                        {
+                            count++;
+                        }
 
-                    int Count = 0;
-                    int MaxCount = 0;
-                    List<Word> temp_list1 = new List<Word>();
-                    List<Word> temp_list2 = new List<Word>();
-                    List<Word> temp_list3 = new List<Word>();
-
-                    if (temp.Length == 1)
-                    { // 겹치는 단어가 1개
-                        temp_list1 = PeekList(tempGrid.WordLenghtList[i + 1]);
-                        MaxCount = temp_list1.Count;
-                        while (find)
-                        { // 같은 인덱스에서 같은 단어로 겹치는 단어가 뽑힐때까지
-                            // 비상 탈출문
-                            if (temp_list1.Count <= 0)
-                            {
-                                Debug.LogWarning("Cant Peek Cross Word");
-                                return;
-                            }
-                            // 안전 탈출문
-                            if (Count >= MaxCount)
-                            {
-                                break;
-                            }
-
-                            int crossindex = Random.Range(0, temp_list1.Count);
-                            var var_value = tempGrid.WordCrossList[i + 1].Split('/');
-                            for (int j = 0; j < var_value.Length; j++)
-                            {
-                                if (m_TempWord.Answer[int.Parse(temp[0])] == temp_list1[crossindex].Answer[int.Parse(var_value[0])])
-                                { // 겹치는 단어가 같을때
-                                    m_MainList.Add(m_TempWord);
-                                    m_MainList.Add(temp_list1[crossindex]);
-                                    m_TempWord = temp_list1[crossindex];
-                                    m_WordList.Remove(m_TempWord);
-                                    m_WordList.Remove(temp_list1[crossindex]);
-                                    find = false;
-                                    i++;
-                                    break;
-                                }
-                                else
-                                { // 겹치는 단어가 없을때
-                                    temp_list1.Remove(temp_list1[crossindex]);
-                                }
-                            }
-                            Count++;
+                        if (count != 0)
+                        { // 맞는 단어를 찾음
+                            m_MainList.Add(TempList[j]);
+                            TempList.Remove(TempList[j]);
+                            break;
+                        }
+                        else
+                        {
+                            count = 0;
                         }
                     }
-                    else if (temp.Length == 2)
-                    { // 겹치는 단어가 2개
-                        temp_list1 = PeekList(tempGrid.WordLenghtList[i + 1]);
-                        temp_list2 = PeekList(tempGrid.WordLenghtList[i + 2]);
-                        MaxCount = temp_list1.Count * temp_list2.Count;
-                        while (find)
-                        { // 같은 인덱스에서 같은 단어로 겹치는 단어가 뽑힐때까지
-                            // 비상 탈출문
-                            if (temp_list1.Count <= 0 || temp_list2.Count <= 0)
-                            {
-                                Debug.LogWarning("Cant Peek Cross Word");
-                                return;
-                            }
-                            // 안전 탈출문
-                            if (Count >= MaxCount)
-                            {
-                                break;
-                            }
-
-                            int crossindex1 = Random.Range(0, temp_list1.Count);
-                            int crossindex2 = Random.Range(0, temp_list2.Count);
-                            var var_value1 = tempGrid.WordCrossList[i + 1];
-                            var var_value2 = tempGrid.WordCrossList[i + 2];
-                            for (int j = 0; j < var_value1.Length; j++)
-                            {
-                                if (m_TempWord.Answer[int.Parse(temp[0])] == temp_list1[crossindex1].Answer[var_value1[j]])
-                                {
-                                    for (int k = 0; k < var_value2.Length; k++)
-                                    {
-                                        if (m_TempWord.Answer[int.Parse(temp[1])] == temp_list1[crossindex2].Answer[var_value2[k]])
-                                        { // 겹치는 단어가 같을때
-                                            m_MainList.Add(m_TempWord);
-                                            m_MainList.Add(temp_list1[crossindex1]);
-                                            m_MainList.Add(temp_list1[crossindex2]);
-                                            m_WordList.Remove(m_TempWord);
-                                            m_WordList.Remove(temp_list1[crossindex1]);
-                                            m_WordList.Remove(temp_list1[crossindex2]);
-                                            find = false;
-                                            i++;
-                                            break;
-                                        }
-                                        else
-                                        { // 겹치는 단어가 없을때
-                                            temp_list1.Remove(temp_list1[crossindex1]);
-                                            temp_list1.Remove(temp_list1[crossindex2]);
-                                        }
-                                    }
-                                }
-                            }
-                            Count++;
+                    else if(PrevCross.Length >= 2)
+                    { // 3개 이상부터
+                        if (TempList[j].Answer[PrevIndex[0]] == PrevCross[0]) // 3개 이상 겹칠때는 예외처리 필요함
+                        {
+                            count++;
                         }
-                    }
-                    else if (temp.Length == 3)
-                    { // 겹치는 단어가 3개
-                        temp_list1 = PeekList(tempGrid.WordLenghtList[i + 1]);
-                        temp_list2 = PeekList(tempGrid.WordLenghtList[i + 2]);
-                        temp_list3 = PeekList(tempGrid.WordLenghtList[i + 3]);
-                        MaxCount = temp_list1.Count * temp_list2.Count * temp_list3.Count;
-                        while (find)
-                        { // 같은 인덱스에서 같은 단어로 겹치는 단어가 뽑힐때까지
-                            // 비상 탈출문
-                            if (temp_list1.Count <= 0 || temp_list2.Count <= 0 || temp_list3.Count <= 0)
-                            {
-                                Debug.LogWarning("Cant Peek Cross Word");
-                                return;
-                            }
-                            // 안전 탈출문
-                            if (Count >= MaxCount)
-                            {
-                                break;
-                            }
 
-                            int crossindex1 = Random.Range(0, temp_list1.Count);
-                            int crossindex2 = Random.Range(0, temp_list2.Count);
-                            int crossindex3 = Random.Range(0, temp_list3.Count);
-                            if (m_TempWord.Answer[int.Parse(temp[0])] == temp_list1[crossindex1].Answer[int.Parse(tempGrid.WordCrossList[i + 1])])
-                            {
-                                if (m_TempWord.Answer[int.Parse(temp[1])] == temp_list2[crossindex2].Answer[int.Parse(tempGrid.WordCrossList[i + 2])])
-                                {
-                                    if (m_TempWord.Answer[int.Parse(temp[2])] == temp_list3[crossindex2].Answer[int.Parse(tempGrid.WordCrossList[i + 3])])
-                                    { // 겹치는 단어가 같을때
-                                        m_MainList.Add(m_TempWord);
-                                        m_MainList.Add(temp_list1[crossindex1]);
-                                        m_MainList.Add(temp_list1[crossindex2]);
-                                        m_MainList.Add(temp_list1[crossindex3]);
-                                        m_WordList.Remove(m_TempWord);
-                                        m_WordList.Remove(temp_list1[crossindex1]);
-                                        m_WordList.Remove(temp_list1[crossindex2]);
-                                        m_WordList.Remove(temp_list1[crossindex3]);
-                                        find = false;
-                                        i++;
-                                        break;
-                                    }
-                                }
-                            }
-                            else
-                            { // 겹치는 단어가 없을때
-                                temp_list1.Remove(temp_list1[crossindex1]);
-                                temp_list1.Remove(temp_list1[crossindex2]);
-                                temp_list1.Remove(temp_list1[crossindex3]);
-                            }
-                            Count++;
+                        if (count != 0)
+                        { // 맞는 단어를 찾음
+                            m_MainList.Add(TempList[j]);
+                            TempList.Remove(TempList[j]);
+                            var temp1 = PrevCross[1];
+                            PrevCross = new char[PrevCross.Length - 1];
+                            PrevCross[0] = temp1;
+                            var temp2 = PrevIndex[1];
+                            PrevIndex = new int[PrevIndex.Length - 1];
+                            PrevIndex[0] = temp2;
+                            jump = true;
+                            break;
+                        }
+                        else
+                        {
+                            count = 0;
                         }
                     }
                 }
+                if(jump)
+                {
+                    continue;
+                }
+                else if (count != 0)
+                {
+                    if (m_MainList.Count == tempGrid.WordLenghtList.Count)
+                    {
+                        break;
+                    }
+
+
+                    if (CrossInfo.Length == 1)
+                    {
+                        PrevCross = new char[0];
+                        PrevIndex = new int[0];
+                        continue;
+                    }
+                    if (CrossInfo.Length == 2)
+                    { // 2개 겹침
+                        if(int.Parse(CrossInfo[0]) < 0)
+                        {
+                            PrevCross[0] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[0])];
+                        }
+                        else
+                        {
+                            PrevCross[0] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[1])];
+                        }
+                        CrossInfo = tempGrid.WordCrossList[i + 1].Split('/');
+                        if(int.Parse(CrossInfo[0]) < 0)
+                        {
+                            PrevIndex[0] = int.Parse(CrossInfo[1]);
+                            continue;
+                        }
+                        PrevIndex[0] = int.Parse(CrossInfo[0]);
+                        continue;
+                    }
+                    if (CrossInfo.Length == 3)
+                    { // 3개 겹침
+                        PrevCross[0] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[1])];
+                        PrevCross[1] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[2])];
+                        CrossInfo = tempGrid.WordCrossList[i + 1].Split('/');
+                        if (int.Parse(CrossInfo[0]) < 0)
+                        {
+                            PrevIndex[0] = int.Parse(CrossInfo[2]);
+                            continue;
+                        }
+                        PrevIndex[0] = int.Parse(CrossInfo[0]);
+                        CrossInfo = tempGrid.WordCrossList[i + 2].Split('/');
+                        PrevIndex[1] = int.Parse(CrossInfo[0]);
+                        continue;
+                    }
+
+                }
+                else
+                { // 다 돌았지만 완성되지 않았을때
+                    m_MainList.RemoveRange(0, m_MainList.Count);
+                    PrevCross = new char[0];
+                    PrevIndex = new int[0];
+                    i = -1;
+                    continue;
+                }
             }
+
+            if(CrossInfo.Length == 1)
+            {
+                if(int.Parse(CrossInfo[0]) == -1)
+                { // 겹치지 않음
+                    int index = Random.Range(0, TempList.Count);
+                    m_MainList.Add(TempList[index]);
+                    TempList.Remove(TempList[index]);
+                    PrevCross = new char[0];
+                    PrevIndex = new int[0];
+                    continue;
+                }
+                else
+                { // 한개만 겹침
+                    int index = Random.Range(0, TempList.Count);
+                    m_MainList.Add(TempList[index]);
+                    TempList.Remove(TempList[index]);
+                    PrevCross = new char[CrossInfo.Length];
+                    PrevCross[0] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[0])];
+                    PrevIndex = new int[CrossInfo.Length];
+                    CrossInfo = tempGrid.WordCrossList[i + 1].Split('/');
+                    PrevIndex[0] = int.Parse(CrossInfo[0]);
+                    continue;
+                }
+            }
+            if(CrossInfo.Length == 2)
+            { // 2개 겹침
+                int index = Random.Range(0, TempList.Count);
+                m_MainList.Add(TempList[index]);
+                TempList.Remove(TempList[index]);
+                PrevCross = new char[CrossInfo.Length];
+                PrevCross[0] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[0])];
+                PrevCross[1] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[1])];
+                CrossInfo = tempGrid.WordCrossList[i + 1].Split('/');
+                PrevIndex[0] = int.Parse(CrossInfo[0]);
+                CrossInfo = tempGrid.WordCrossList[i + 2].Split('/');
+                PrevIndex[1] = int.Parse(CrossInfo[0]);
+                continue;
+            }
+            if (CrossInfo.Length == 3)
+            { // 3개 겹침
+                int index = Random.Range(0, TempList.Count);
+                m_MainList.Add(TempList[index]);
+                TempList.Remove(TempList[index]);
+                PrevCross = new char[CrossInfo.Length];
+                PrevCross[0] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[0])];
+                PrevCross[1] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[1])];
+                PrevCross[2] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[2])];
+                PrevIndex = new int[CrossInfo.Length];
+                CrossInfo = tempGrid.WordCrossList[i + 1].Split('/');
+                PrevIndex[0] = int.Parse(CrossInfo[0]);
+                CrossInfo = tempGrid.WordCrossList[i + 2].Split('/');
+                PrevIndex[1] = int.Parse(CrossInfo[0]);
+                CrossInfo = tempGrid.WordCrossList[i + 3].Split('/');
+                PrevIndex[1] = int.Parse(CrossInfo[0]);
+                continue;
+            }
+        }
+
+        for (int i = 0; i < m_MainList.Count; i++)
+        {
+            Debug.Log(m_MainList[i].Answer);
+        }
+
+        int temp_cross = 0;
+        for (int i = 0; i < m_MainList.Count; i++)
+        {
+            int count = 0;
+            if (temp_cross != 0)
+            {
+                count++;
+                temp_cross = 0;
+            }
+            for (int j = 0; j < m_ObjList.Count; j++)
+            {
+                var var_int = m_ObjList[j].name.Split('&');
+                if (var_int.Length == 1)
+                {
+                    if (var_int[0] == (i + 1).ToString())
+                    {
+                        m_ObjList[j].name = m_MainList[i].Answer[count].ToString();
+                        count++;
+                    }
+                }
+                else
+                {
+                    if (var_int[0] == (i + 1).ToString())
+                    {
+                        m_ObjList[j].name = m_MainList[i].Answer[count].ToString();
+                        temp_cross = int.Parse(var_int[1]);
+                        count++;
+                    }
+                }
+            }
+        }
+    }
+
+    List<Word> GetList(int i)
+    {
+        switch (i)
+        {
+            case 3:
+                return m_3List;
+            case 4:
+                return m_4List;
+            case 5:
+                return m_5List;
+            case 6:
+                return m_6List;
+            case 7:
+                return m_7List;
+            case 8:
+                return m_8List;
+            case 9:
+                return m_9List;
+            case 10:
+                return m_10List;
+            case 11:
+                return m_11List;
+            case 12:
+                return m_12List;
+            case 13:
+                return m_13List;
+            case 14:
+                return m_14List;
+            default:
+                Debug.LogError("ㄴㅇㄱ");
+                return null;
         }
     }
 
@@ -440,33 +519,35 @@ public class GridMgr : MonoBehaviour
             }
         }
     }
-
     void MakeGrid(GridInfo info)
     {
         for (int i = 0; i < info.GridSize; i++)
         {
             for (int j = 0; j < info.GridSize; j++)
             {
-                if(info.Grid[i,j] == true)
+                var temp_int = info.Grid[i, j].Split('&');
+                if (int.Parse(temp_int[0]) != 0)
                 {
                     var temp = Instantiate(GridPrefab, GameObject.Find("GridContainer").gameObject.transform);
                     //temp.name = m_MakeWord.Answer + " " + i;
-                    temp.tag = "Horizontal";
-                    ObjList.Add(temp);
-                    temp.transform.localPosition = new Vector3((110 * i) - 500, (110 * j) - 500, 0);
+                    temp.name = info.Grid[i,j].ToString();
+                    m_ObjList.Add(temp);
+                    temp.transform.localPosition = new Vector3((110 * i) - 250, (110 * j) - 250, 0);
                 }
             }
         }
+
+        PushData();
     }
     public void DeleteObj()
     {
-        if (ObjList == null)
+        if (m_ObjList == null)
             return;
-        int temp_int = ObjList.Count;
+        int temp_int = m_ObjList.Count;
         for (int i = 0; i < temp_int; i++)
         {
-            Destroy(ObjList[0]);
-            ObjList.Remove(ObjList[0]);
+            Destroy(m_ObjList[0]);
+            m_ObjList.Remove(m_ObjList[0]);
         }
     }
 
@@ -474,30 +555,25 @@ public class GridMgr : MonoBehaviour
     {
         DeleteObj();
         MakeGrid(LoadMapData("Scripts/Grid/Grid1.csv"));
-        PutData();
     }
     public void MakeGrid2()
     {
         DeleteObj();
         MakeGrid(LoadMapData("Scripts/Grid/Grid2.csv"));
-        PutData();
     }
     public void MakeGrid3()
     {
         DeleteObj();
         MakeGrid(LoadMapData("Scripts/Grid/Grid3.csv"));
-        PutData();
     }
     public void MakeGrid4()
     {
         DeleteObj();
         MakeGrid(LoadMapData("Scripts/Grid/Grid4.csv"));
-        PutData();
     }
     public void MakeGrid5()
     {
         DeleteObj();
         MakeGrid(LoadMapData("Scripts/Grid/Grid5.csv"));
-        PutData();
     }
 }

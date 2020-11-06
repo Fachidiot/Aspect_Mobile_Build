@@ -5,8 +5,8 @@ using UnityEngine;
 public class GridInfo
 {
     // 그리드
-    private bool[,] m_Grid;
-    public bool[,] Grid { get { return m_Grid; } set { m_Grid = value; } }
+    private string[,] m_Grid;
+    public string[,] Grid { get { return m_Grid; } set { m_Grid = value; } }
     private int m_GridSize;
     public int GridSize { get { return m_GridSize; } set { m_GridSize = value; } }
     // 단어 길이 리스트
@@ -23,7 +23,7 @@ public class GridInfo
     // 생성자
     public GridInfo(int x, int y)
     {
-        m_Grid = new bool[x, y];
+        m_Grid = new string[x, y];
         GridSize = x;
         WordLenghtList = new List<int>();
         WordCrossList = new List<string>();
