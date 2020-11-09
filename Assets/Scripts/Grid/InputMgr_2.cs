@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-
-public class InputMgr : MonoBehaviour
+public class InputMgr_2 : MonoBehaviour
 {
     [Header("Veiwer")]
     public GameObject RectScroll;
@@ -35,7 +34,7 @@ public class InputMgr : MonoBehaviour
     private int m_Score = -1;
     public int GetScore(string difficult)
     {
-        if(PlayerPrefs.HasKey(difficult))
+        if (PlayerPrefs.HasKey(difficult))
         {
             return PlayerPrefs.GetInt(difficult);
         }
@@ -77,7 +76,7 @@ public class InputMgr : MonoBehaviour
         {
             for (int i = 0; i < m_ObjectList.Length; i++)
             {
-                if(m_ObjectList[i] != null)
+                if (m_ObjectList[i] != null)
                 {
                     m_ObjectList[i].GetComponent<Outline>().enabled = false;
                 }
@@ -102,8 +101,7 @@ public class InputMgr : MonoBehaviour
     private int CurrentIndex = 0;
     private int m_MaxCount = 10;
     private GameObject TempInput;
-    private GameObject WordManager;
-    private GameObject CrossManager;
+    private GameObject GridManager;
     private List<Word> m_WordList;
     private List<Word> m_DoneList;
     private GameObject[] m_ObjectList;
@@ -144,7 +142,7 @@ public class InputMgr : MonoBehaviour
 
             if (_input == "BK_SPACE")
             {
-                if(m_InputIndexList[CurrentIndex] <= 0)
+                if (m_InputIndexList[CurrentIndex] <= 0)
                 {
                     m_IsInput = false;
                     return;
@@ -178,7 +176,7 @@ public class InputMgr : MonoBehaviour
                 return;
             }
 
-            if(m_InputIndexList[CurrentIndex] >= m_Answer.Answer.Length)
+            if (m_InputIndexList[CurrentIndex] >= m_Answer.Answer.Length)
             {
                 return;
             }
@@ -188,7 +186,7 @@ public class InputMgr : MonoBehaviour
 
             if (temp != null)
             { // 겹치는 부분이 존재함
-                if(temp.GetComponent<InputWord>().IsCorrect)
+                if (temp.GetComponent<InputWord>().IsCorrect)
                 { // 겹치는 단어가 정답일때
                     string var_string = temp.GetComponent<InputWord>().GetInput();
                     Debug.Log(var_string);
@@ -246,10 +244,9 @@ public class InputMgr : MonoBehaviour
 
         return null;
     }
-
     void DiffuseEffect()
     {
-        if(Correct.IsActive())
+        if (Correct.IsActive())
         { // 정답 이펙트
             while (Correct.color.a > 0f)
             {
@@ -260,7 +257,7 @@ public class InputMgr : MonoBehaviour
             RESET();
 
             // 문제를 맞혔을때만 다음으로 넘어가거나 뒤로 돌아가게 해줘야함
-            if(Assistant)
+            if (Assistant)
             {
                 Next(true);
             }
@@ -285,43 +282,30 @@ public class InputMgr : MonoBehaviour
     {
         if (m_Power)
         {
-            // 시작했을때 한번만
-            if (!m_IsList)
+            if (!m_IsStart)
             {
-                WordManager = GameObject.Find("WordMgr");
+                Ready.gameObject.SetActive(false);
+                Start.gameObject.SetActive(true);
+                m_IsStart = true;
             }
-            if (WordManager.GetComponent<WordMgr>().IsMake)
+            else if (!m_IsEnd)
             {
-                // 시작했을때 한번만
-                if (!m_IsStart)
+                Timer();
+                ////////////////////
+                if (Input.GetKeyDown(KeyCode.LeftArrow))
                 {
-                    Ready.gameObject.SetActive(false);
-                    Start.gameObject.SetActive(true);
-                    m_IsStart = true;
+                    Prev();
                 }
-                else if (!m_IsEnd)
+                if (Input.GetKeyDown(KeyCode.RightArrow))
                 {
-                    Timer();
-                    ////////////////////
-                    if(Input.GetKeyDown(KeyCode.LeftArrow))
-                    {
-                        Prev();
-                    }
-                    if(Input.GetKeyDown(KeyCode.RightArrow))
-                    {
-                        Next();
-                    }
+                    Next();
                 }
-                if(Start.color.a <= 0)
-                {
-                    Start.gameObject.SetActive(false);
-                }
-                Start.color -= new Color(0, 0, 0, 1f) * Time.deltaTime;
             }
-            else
-            { // 게임 시작 전
-                Ready.GetComponent<Outline>().effectDistance += new Vector2(150.0f, 0.0f) * Time.deltaTime;
+            if (Start.color.a <= 0)
+            {
+                Start.gameObject.SetActive(false);
             }
+            Start.color -= new Color(0, 0, 0, 1f) * Time.deltaTime;
 
             if (m_IsCheck)
             {
@@ -332,7 +316,7 @@ public class InputMgr : MonoBehaviour
 
     void Timer()
     {
-        if(m_DoneList.Count >= m_MaxCount)
+        if (m_DoneList.Count >= m_MaxCount)
         { // 모든 정답을 맞춘 상황
             Debug.Log("게임 종료");
             m_Score = (int)(m_CurrentTime);
@@ -341,7 +325,7 @@ public class InputMgr : MonoBehaviour
             WinTime.text = ((int)m_CurrentTime).ToString() + " 초";
             return;
         }
-        if(m_CurrentTime >= MaxTime)
+        if (m_CurrentTime >= MaxTime)
         { // 시간 종료
             Debug.Log("시간 종료");
             m_IsEnd = true;
@@ -361,16 +345,14 @@ public class InputMgr : MonoBehaviour
             // 시작했을때 한번만
             if (!m_IsList)
             {
-                CrossManager = GameObject.Find("CrossMgr");
-                CrossManager.GetComponent<CrossWord>().SetRandomList(MaxCount);
-                WordManager = GameObject.Find("WordMgr");
+                GridManager = GameObject.Find("GridInfoMgr");
                 m_IsList = true;
             }
-            // 처음 한번만 단어 목록 생성
-            if (m_WordList.Count <= 0 && WordManager.GetComponent<WordMgr>().IsMake)
+
+            if(m_WordList.Count <= 0 && GridManager.GetComponent<GridMgr>().IsMake)
             {
-                var temp = WordManager.GetComponent<WordMgr>().GetList();
-                for (int i = 0; i < temp.Length; i++)
+                var temp = GridManager.GetComponent<GridMgr>().GetMainList();
+                for (int i = 0; i < temp.Count; i++)
                 {
                     m_WordList.Add(temp[i]);
                     m_InputList.Add("");
@@ -382,7 +364,7 @@ public class InputMgr : MonoBehaviour
             QuestionCount.text = (m_DoneList.Count + " / " + m_MaxCount);
 
             // 표를 눌렀을 때
-            if(!m_IsEnd)
+            if (!m_IsEnd)
             {
                 if (m_IsClicked)
                 {
@@ -444,7 +426,7 @@ public class InputMgr : MonoBehaviour
 
     public void Next(bool auto = false)
     {
-        if(auto)
+        if (auto)
         {
             RESET();
             CurrentHint.text = m_Answer.Meaning;
@@ -455,7 +437,7 @@ public class InputMgr : MonoBehaviour
             int index = FindWord(m_Answer);
             if (index <= m_WordList.Count - 1)
             {
-                if(index != m_WordList.Count - 1)
+                if (index != m_WordList.Count - 1)
                 {
                     m_Answer = m_WordList[index + 1];
                     index = FindWord(m_Answer);
@@ -469,7 +451,7 @@ public class InputMgr : MonoBehaviour
             }
         }
         HighLight();
-        if(Assistant)
+        if (Assistant)
         {
             var temp = GameObject.Find(m_Answer.Answer + " 0");
             Vector3 Pos = new Vector3(-temp.transform.localPosition.y, temp.transform.localPosition.x, 0);
@@ -511,7 +493,7 @@ public class InputMgr : MonoBehaviour
         RESET();
         for (int i = 0; i < m_DoneList.Count; i++)
         {
-            if(m_DoneList[i].Answer == _answer)
+            if (m_DoneList[i].Answer == _answer)
             {
                 return;
             }
@@ -551,7 +533,7 @@ public class InputMgr : MonoBehaviour
 
     void RESET()
     {
-        if(m_ObjectList != null)
+        if (m_ObjectList != null)
         {
             for (int i = 0; i < m_ObjectList.Length; i++)
             {
@@ -574,7 +556,7 @@ public class InputMgr : MonoBehaviour
     {
         for (int i = 0; i < m_WordList.Count; i++)
         {
-            if(m_WordList[i] == word)
+            if (m_WordList[i] == word)
             {
                 return i;
             }

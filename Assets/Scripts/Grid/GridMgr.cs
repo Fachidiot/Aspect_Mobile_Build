@@ -8,10 +8,18 @@ public class GridMgr : MonoBehaviour
     public string str_name;
     public GameObject GridPrefab;
 
-    private GridInfo tempGrid;
+    private const string DefaultPath = "/Resource/Map/GridMap1Info.json";
+    private GridInfo m_TempGrid;
+    private string[,] m_Grid;
     private Word m_TempWord;
+    private int m_WordCout;
     private List<Word> m_WordList;
     private List<Word> m_MainList;
+    private bool m_bIsMake;
+    public bool IsMake { get { return m_bIsMake; } }
+
+    private List<GameObject> m_ObjList = new List<GameObject>();
+
     // Count Word List
     private List<Word> m_3List = new List<Word>();
     private List<Word> m_4List = new List<Word>();
@@ -25,11 +33,11 @@ public class GridMgr : MonoBehaviour
     private List<Word> m_12List = new List<Word>();
     private List<Word> m_13List = new List<Word>();
     private List<Word> m_14List = new List<Word>();
-    private bool[,] temp = new bool[5, 5];
-    private List<GameObject> m_ObjList = new List<GameObject>();
 
     private void Start()
-    {        
+    {
+        LoadMapData();
+        PushData();
         //Debug.Log(m_3List.Count);
         //Debug.Log(m_4List.Count);
         //Debug.Log(m_5List.Count);
@@ -46,7 +54,20 @@ public class GridMgr : MonoBehaviour
 
     void ListSet()
     {
+        m_WordList = new List<Word>();
         m_WordList = csvReader_ver2.GetList();
+        m_3List = new List<Word>();
+        m_4List = new List<Word>();
+        m_5List = new List<Word>();
+        m_6List = new List<Word>();
+        m_7List = new List<Word>();
+        m_8List = new List<Word>();
+        m_9List = new List<Word>();
+        m_10List = new List<Word>();
+        m_11List = new List<Word>();
+        m_12List = new List<Word>();
+        m_13List = new List<Word>();
+        m_14List = new List<Word>();
         for (int i = 0; i < m_WordList.Count; i++)
         {
             switch (m_WordList[i].Length)
@@ -95,337 +116,1114 @@ public class GridMgr : MonoBehaviour
 
     }
 
-    void SaveMapData()
+    GridInfo LoadMapData(string path = DefaultPath)
     {
-        StreamWriter sw = new StreamWriter(Application.dataPath + "/" + str_name);
+        ListSet();
+        string temp_string = File.ReadAllText(Application.dataPath + path);
+        var var_Info = JsonUtility.FromJson<GridInfo>(temp_string);
 
-        string temp_string = "";
-        sw.WriteLine("Grid");
-        sw.WriteLine(5);
-        for (int i = 0; i < 5; i++)
+        if(var_Info.CrossInfo6 == null)
         {
-            for (int j = 0; j < 5; j++)
-            {
-                if (j == 0)
-                {
-                    temp_string = tempGrid.Grid[i, j].ToString();
-                    continue;
-                }
-                temp_string = string.Join(",", temp_string, tempGrid.Grid[i, j]);
-            }
-            sw.WriteLine(temp_string);
-            temp_string = "";
+            m_WordCout = 5;
         }
-        sw.WriteLine("WordLengthList");
-        temp_string = "";
-        for (int i = 0; i < tempGrid.WordLenghtList.Count; i++)
+        else if(var_Info.CrossInfo11 == null)
         {
-            if (i == 0)
-            {
-                temp_string = tempGrid.WordLenghtList[i].ToString();
-                continue;
-            }
-            temp_string = string.Join(",", temp_string, tempGrid.WordLenghtList[i]);
+            m_WordCout = 10;
         }
-        sw.WriteLine(temp_string);
-        sw.WriteLine("WordCrossList");
-        temp_string = "";
-        for (int i = 0; i < tempGrid.WordCrossList.Count; i++)
+        else
         {
-            if (i == 0)
-            {
-                temp_string = tempGrid.WordCrossList[i].ToString();
-                continue;
-            }
-            temp_string = string.Join(",", temp_string, tempGrid.WordCrossList[i]);
+            m_WordCout = 15;
         }
-        sw.WriteLine(temp_string);
-        sw.Flush();
-        sw.Close();
-    }
-    GridInfo LoadMapData(string path)
-    {
-        StreamReader sr = new StreamReader(Application.dataPath + "/" + path);
-
-        if (0 == sr.Peek())
+        
+        int x = 0;
+        int y = 0;
+        m_Grid = new string[m_WordCout, m_WordCout];
+        for (int i = 0; i < var_Info.Grid.Length; i++)
         {
-            Debug.LogError("File doesn't exist");
-        }
-        bool m_bIsEnd = false;
-        int WordCount = 0;
-
-        GridInfo temp_grid = new GridInfo();
-
-        while (!m_bIsEnd)
-        {
-            string str_Data = sr.ReadLine();
-            if (str_Data == null)
-            {
-                m_bIsEnd = true;
-                break;
+            if (i % m_WordCout == 0 && i != 0)
+            { // \n
+                x++;
+                y = 0;
             }
-            switch (str_Data)
-            {
-                case "Grid":
-                    str_Data = sr.ReadLine();
-                    WordCount = int.Parse(str_Data);
-                    temp_grid = new GridInfo(WordCount, WordCount);
-                    for (int i = 0; i < WordCount; i++)
-                    {
-                        str_Data = sr.ReadLine();
-                        var var_Value1 = str_Data.Split(',');
-                        for (int j = 0; j < WordCount; j++)
-                        {
-                            temp_grid.Grid[i, j] = var_Value1[j];
-                        }
-                    }
-                    break;
-                case "WordLengthList":
-                    str_Data = sr.ReadLine();
-                    var var_Value2 = str_Data.Split(',');
-                    for (int i = 0; i < WordCount; i++)
-                    {
-                        temp_grid.WordLenghtList.Add(int.Parse(var_Value2[i]));
-                    }
-                    break;
-                case "WordCrossList":
-                    str_Data = sr.ReadLine();
-                    var var_Value3 = str_Data.Split(',');
-                    for (int i = 0; i < WordCount; i++)
-                    {
-                        temp_grid.WordCrossList.Add(var_Value3[i]);
-                    }
-                    break;
-                default:
-                    Debug.LogWarning("예상치 못한 데이터 ㄴㅇㄱ");
-                    break;
-            }
+            m_Grid[x, y] = var_Info.Grid[i];
+            y++;
         }
-
-        tempGrid = temp_grid;
+        m_TempGrid = var_Info;
         Debug.Log("Successfully reading data");
-        return temp_grid;
+        return m_TempGrid;
     }
 
     void PushData()
     {
-        ListSet();
+        if(m_TempGrid == null)
+        { return; }
+
         m_MainList = new List<Word>();
         char[] PrevCross = new char[0];
-        int[] PrevIndex = new int[0];
-        for (int i = 0; i < tempGrid.WordLenghtList.Count; i++)
+        int[]  PrevIndex = new int[0];
+
+        string[,] SaveMap = new string[m_WordCout, m_WordCout];
+
+        // 맞는 단어만 뽑기
+        for (int i = 0; i < m_WordCout; i++)
         {
-            bool jump = false;
-            var TempList = GetList(tempGrid.WordLenghtList[i]);
-            var CrossInfo = tempGrid.WordCrossList[i].Split('/');
-            if (PrevCross.Length != 0)
+            switch (i + 1)
             {
-                int count = 0;
-                for (int j = 0; j < TempList.Count; j++)
-                {
-                    count = 0;
-                    if(PrevCross.Length == 1)
+                case 1:
+                    for (int a = 0; a < m_WordCout; a++)
                     {
-                        if (TempList[j].Answer[PrevIndex[0]] == PrevCross[0]) // 3개 이상 겹칠때는 예외처리 필요함
+                        for (int b = 0; b < m_WordCout; b++)
                         {
-                            count++;
+                            SaveMap[a, b] = m_Grid[a, b];
+                        }
+                    }
+
+                    var templist1 = GetList(m_TempGrid.CrossInfo1[2]);
+
+                    for (int j = 0; j < templist1.Count; j++)
+                    {
+                        int random = Random.Range(0, templist1.Count);
+                        m_TempWord = templist1[random];
+
+                        if(m_TempGrid.CrossInfo1[3] == 100)
+                        { // 단어가 수평일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if(m_Grid[m_TempGrid.CrossInfo1[0], m_TempGrid.CrossInfo1[1] + k] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo1[0], m_TempGrid.CrossInfo1[1] + k] != m_TempWord.Answer[k].ToString())
+                                { // 이미 존재하는 단어가 다를경우
+                                    count++;
+                                }
+                            }
+                            if(count == 0)
+                            { // 입력할 단어가 비어있거나 입력되어있는 단어의 낱말과 일치할때
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo1[0], m_TempGrid.CrossInfo1[1] + z] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist1.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+                        else if (m_TempGrid.CrossInfo1[3] == -100)
+                        { // 단어가 수직일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if(m_Grid[m_TempGrid.CrossInfo1[0] + k, m_TempGrid.CrossInfo1[1]] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo1[0] + k, m_TempGrid.CrossInfo1[1]] != m_TempWord.Answer[k].ToString())
+                                {
+                                    count++;
+                                }
+                            }
+                            if(count == 0)
+                            {
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo1[0] + z, m_TempGrid.CrossInfo1[1]] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist1.Remove(m_TempWord);
+                                break;
+                            }
                         }
 
-                        if (count != 0)
-                        { // 맞는 단어를 찾음
-                            m_MainList.Add(TempList[j]);
-                            TempList.Remove(TempList[j]);
+                        if(templist1.Count == j + 1)
+                        {
+                            m_MainList.RemoveRange(0, m_MainList.Count);
+                            ListSet();
+                            for (int a = 0; a < m_WordCout; a++)
+                            {
+                                for (int b = 0; b < m_WordCout; b++)
+                                {
+                                    m_Grid[a, b] = SaveMap[a, b];
+                                }
+                            }
+                            i = -1;
                             break;
                         }
-                        else
-                        {
-                            count = 0;
-                        }
                     }
-                    else if(PrevCross.Length >= 2)
-                    { // 3개 이상부터
-                        if (TempList[j].Answer[PrevIndex[0]] == PrevCross[0]) // 3개 이상 겹칠때는 예외처리 필요함
-                        {
-                            count++;
+                    break;
+                case 2:
+                    var templist2 = GetList(m_TempGrid.CrossInfo2[2]);
+
+                    for (int j = 0; j < templist2.Count; j++)
+                    {
+                        m_TempWord = templist2[j];
+
+                        if (m_TempGrid.CrossInfo2[3] == 100)
+                        { // 단어가 수평일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo2[0], m_TempGrid.CrossInfo2[1] + k] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo2[0], m_TempGrid.CrossInfo2[1] + k] != m_TempWord.Answer[k].ToString())
+                                { // 이미 존재하는 단어가 다를경우
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            { // 입력할 단어가 비어있거나 입력되어있는 단어의 낱말과 일치할때
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo2[0], m_TempGrid.CrossInfo2[1] + z] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist2.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+                        else if (m_TempGrid.CrossInfo2[3] == -100)
+                        { // 단어가 수직일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo2[0] + k, m_TempGrid.CrossInfo2[1]] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo2[0] + k, m_TempGrid.CrossInfo2[1]] != m_TempWord.Answer[k].ToString())
+                                {
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            {
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo2[0] + z, m_TempGrid.CrossInfo2[1]] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist2.Remove(m_TempWord);
+                                break;
+                            }
                         }
 
-                        if (count != 0)
-                        { // 맞는 단어를 찾음
-                            m_MainList.Add(TempList[j]);
-                            TempList.Remove(TempList[j]);
-                            var temp1 = PrevCross[1];
-                            PrevCross = new char[PrevCross.Length - 1];
-                            PrevCross[0] = temp1;
-                            var temp2 = PrevIndex[1];
-                            PrevIndex = new int[PrevIndex.Length - 1];
-                            PrevIndex[0] = temp2;
-                            jump = true;
+                        if (templist2.Count == j + 1)
+                        {
+                            m_MainList.RemoveRange(0, m_MainList.Count);
+                            ListSet();
+                            for (int a = 0; a < m_WordCout; a++)
+                            {
+                                for (int b = 0; b < m_WordCout; b++)
+                                {
+                                    m_Grid[a, b] = SaveMap[a, b];
+                                }
+                            }
+                            i = -1;
                             break;
                         }
-                        else
-                        {
-                            count = 0;
-                        }
                     }
-                }
-                if(jump)
-                {
-                    continue;
-                }
-                else if (count != 0)
-                {
-                    if (m_MainList.Count == tempGrid.WordLenghtList.Count)
+                    break;
+                case 3:
+                    var templist3 = GetList(m_TempGrid.CrossInfo3[2]);
+
+                    for (int j = 0; j < templist3.Count; j++)
                     {
-                        break;
+                        m_TempWord = templist3[j];
+
+                        if (m_TempGrid.CrossInfo3[3] == 100)
+                        { // 단어가 수평일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo3[0], m_TempGrid.CrossInfo3[1] + k] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo3[0], m_TempGrid.CrossInfo3[1] + k] != m_TempWord.Answer[k].ToString())
+                                { // 이미 존재하는 단어가 다를경우
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            { // 입력할 단어가 비어있거나 입력되어있는 단어의 낱말과 일치할때
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo3[0], m_TempGrid.CrossInfo3[1] + z] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist3.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+                        else if (m_TempGrid.CrossInfo3[3] == -100)
+                        { // 단어가 수직일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo3[0] + k, m_TempGrid.CrossInfo3[1]] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo3[0] + k, m_TempGrid.CrossInfo3[1]] != m_TempWord.Answer[k].ToString())
+                                {
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            {
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo3[0] + z, m_TempGrid.CrossInfo3[1]] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist3.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+
+                        if (templist3.Count == j + 1)
+                        {
+                            m_MainList.RemoveRange(0, m_MainList.Count);
+                            ListSet();
+                            for (int a = 0; a < m_WordCout; a++)
+                            {
+                                for (int b = 0; b < m_WordCout; b++)
+                                {
+                                    m_Grid[a, b] = SaveMap[a, b];
+                                }
+                            }
+                            i = -1;
+                            break;
+                        }
                     }
+                    break;
+                case 4:
+                    var templist4 = GetList(m_TempGrid.CrossInfo4[2]);
 
-
-                    if (CrossInfo.Length == 1)
+                    for (int j = 0; j < templist4.Count; j++)
                     {
-                        PrevCross = new char[0];
-                        PrevIndex = new int[0];
-                        continue;
-                    }
-                    if (CrossInfo.Length == 2)
-                    { // 2개 겹침
-                        if(int.Parse(CrossInfo[0]) < 0)
-                        {
-                            PrevCross[0] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[0])];
-                        }
-                        else
-                        {
-                            PrevCross[0] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[1])];
-                        }
-                        CrossInfo = tempGrid.WordCrossList[i + 1].Split('/');
-                        if(int.Parse(CrossInfo[0]) < 0)
-                        {
-                            PrevIndex[0] = int.Parse(CrossInfo[1]);
-                            continue;
-                        }
-                        PrevIndex[0] = int.Parse(CrossInfo[0]);
-                        continue;
-                    }
-                    if (CrossInfo.Length == 3)
-                    { // 3개 겹침
-                        PrevCross[0] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[1])];
-                        PrevCross[1] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[2])];
-                        CrossInfo = tempGrid.WordCrossList[i + 1].Split('/');
-                        if (int.Parse(CrossInfo[0]) < 0)
-                        {
-                            PrevIndex[0] = int.Parse(CrossInfo[2]);
-                            continue;
-                        }
-                        PrevIndex[0] = int.Parse(CrossInfo[0]);
-                        CrossInfo = tempGrid.WordCrossList[i + 2].Split('/');
-                        PrevIndex[1] = int.Parse(CrossInfo[0]);
-                        continue;
-                    }
+                        m_TempWord = templist4[j];
 
-                }
-                else
-                { // 다 돌았지만 완성되지 않았을때
-                    m_MainList.RemoveRange(0, m_MainList.Count);
-                    PrevCross = new char[0];
-                    PrevIndex = new int[0];
-                    i = -1;
-                    continue;
-                }
-            }
+                        if (m_TempGrid.CrossInfo4[3] == 100)
+                        { // 단어가 수평일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo4[0], m_TempGrid.CrossInfo4[1] + k] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo4[0], m_TempGrid.CrossInfo4[1] + k] != m_TempWord.Answer[k].ToString())
+                                { // 이미 존재하는 단어가 다를경우
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            { // 입력할 단어가 비어있거나 입력되어있는 단어의 낱말과 일치할때
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo4[0], m_TempGrid.CrossInfo4[1] + z] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist4.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+                        else if (m_TempGrid.CrossInfo4[3] == -100)
+                        { // 단어가 수직일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo4[0] + k, m_TempGrid.CrossInfo4[1]] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo4[0] + k, m_TempGrid.CrossInfo4[1]] != m_TempWord.Answer[k].ToString())
+                                {
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            {
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo4[0] + z, m_TempGrid.CrossInfo4[1]] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist4.Remove(m_TempWord);
+                                break;
+                            }
+                        }
 
-            if(CrossInfo.Length == 1)
-            {
-                if(int.Parse(CrossInfo[0]) == -1)
-                { // 겹치지 않음
-                    int index = Random.Range(0, TempList.Count);
-                    m_MainList.Add(TempList[index]);
-                    TempList.Remove(TempList[index]);
-                    PrevCross = new char[0];
-                    PrevIndex = new int[0];
-                    continue;
-                }
-                else
-                { // 한개만 겹침
-                    int index = Random.Range(0, TempList.Count);
-                    m_MainList.Add(TempList[index]);
-                    TempList.Remove(TempList[index]);
-                    PrevCross = new char[CrossInfo.Length];
-                    PrevCross[0] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[0])];
-                    PrevIndex = new int[CrossInfo.Length];
-                    CrossInfo = tempGrid.WordCrossList[i + 1].Split('/');
-                    PrevIndex[0] = int.Parse(CrossInfo[0]);
-                    continue;
-                }
-            }
-            if(CrossInfo.Length == 2)
-            { // 2개 겹침
-                int index = Random.Range(0, TempList.Count);
-                m_MainList.Add(TempList[index]);
-                TempList.Remove(TempList[index]);
-                PrevCross = new char[CrossInfo.Length];
-                PrevCross[0] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[0])];
-                PrevCross[1] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[1])];
-                CrossInfo = tempGrid.WordCrossList[i + 1].Split('/');
-                PrevIndex[0] = int.Parse(CrossInfo[0]);
-                CrossInfo = tempGrid.WordCrossList[i + 2].Split('/');
-                PrevIndex[1] = int.Parse(CrossInfo[0]);
-                continue;
-            }
-            if (CrossInfo.Length == 3)
-            { // 3개 겹침
-                int index = Random.Range(0, TempList.Count);
-                m_MainList.Add(TempList[index]);
-                TempList.Remove(TempList[index]);
-                PrevCross = new char[CrossInfo.Length];
-                PrevCross[0] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[0])];
-                PrevCross[1] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[1])];
-                PrevCross[2] = m_MainList[m_MainList.Count - 1].Answer[int.Parse(CrossInfo[2])];
-                PrevIndex = new int[CrossInfo.Length];
-                CrossInfo = tempGrid.WordCrossList[i + 1].Split('/');
-                PrevIndex[0] = int.Parse(CrossInfo[0]);
-                CrossInfo = tempGrid.WordCrossList[i + 2].Split('/');
-                PrevIndex[1] = int.Parse(CrossInfo[0]);
-                CrossInfo = tempGrid.WordCrossList[i + 3].Split('/');
-                PrevIndex[1] = int.Parse(CrossInfo[0]);
-                continue;
+                        if (templist4.Count == j + 1)
+                        {
+                            m_MainList.RemoveRange(0, m_MainList.Count);
+                            ListSet();
+                            for (int a = 0; a < m_WordCout; a++)
+                            {
+                                for (int b = 0; b < m_WordCout; b++)
+                                {
+                                    m_Grid[a, b] = SaveMap[a, b];
+                                }
+                            }
+                            i = -1;
+                            break;
+                        }
+                    }
+                    break;
+                case 5:
+                    var templist5 = GetList(m_TempGrid.CrossInfo5[2]);
+
+                    for (int j = 0; j < templist5.Count; j++)
+                    {
+                        m_TempWord = templist5[j];
+
+                        if (m_TempGrid.CrossInfo5[3] == 100)
+                        { // 단어가 수평일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo5[0], m_TempGrid.CrossInfo5[1] + k] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo5[0], m_TempGrid.CrossInfo5[1] + k] != m_TempWord.Answer[k].ToString())
+                                { // 이미 존재하는 단어가 다를경우
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            { // 입력할 단어가 비어있거나 입력되어있는 단어의 낱말과 일치할때
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo5[0], m_TempGrid.CrossInfo5[1] + z] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist5.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+                        else if (m_TempGrid.CrossInfo5[3] == -100)
+                        { // 단어가 수직일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo5[0] + k, m_TempGrid.CrossInfo5[1]] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo5[0] + k, m_TempGrid.CrossInfo5[1]] != m_TempWord.Answer[k].ToString())
+                                {
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            {
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo5[0] + z, m_TempGrid.CrossInfo5[1]] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist5.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+
+                        if (templist5.Count == j + 1)
+                        {
+                            m_MainList.RemoveRange(0, m_MainList.Count);
+                            ListSet();
+                            for (int a = 0; a < m_WordCout; a++)
+                            {
+                                for (int b = 0; b < m_WordCout; b++)
+                                {
+                                    m_Grid[a, b] = SaveMap[a, b];
+                                }
+                            }
+                            i = -1;
+                            break;
+                        }
+                    }
+                    break;
+                case 6:
+                    var templist6 = GetList(m_TempGrid.CrossInfo6[2]);
+
+                    for (int j = 0; j < templist6.Count; j++)
+                    {
+                        m_TempWord = templist6[j];
+
+                        if (m_TempGrid.CrossInfo6[3] == 100)
+                        { // 단어가 수평일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo6[0], m_TempGrid.CrossInfo6[1] + k] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo6[0], m_TempGrid.CrossInfo6[1] + k] != m_TempWord.Answer[k].ToString())
+                                { // 이미 존재하는 단어가 다를경우
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            { // 입력할 단어가 비어있거나 입력되어있는 단어의 낱말과 일치할때
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo6[0], m_TempGrid.CrossInfo6[1] + z] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist6.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+                        else if (m_TempGrid.CrossInfo6[3] == -100)
+                        { // 단어가 수직일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo6[0] + k, m_TempGrid.CrossInfo6[1]] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo6[0] + k, m_TempGrid.CrossInfo6[1]] != m_TempWord.Answer[k].ToString())
+                                {
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            {
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo6[0] + z, m_TempGrid.CrossInfo6[1]] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist6.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+
+                        if (templist6.Count == j + 1)
+                        {
+                            m_MainList.RemoveRange(0, m_MainList.Count);
+                            ListSet();
+                            for (int a = 0; a < m_WordCout; a++)
+                            {
+                                for (int b = 0; b < m_WordCout; b++)
+                                {
+                                    m_Grid[a, b] = SaveMap[a, b];
+                                }
+                            }
+                            i = -1;
+                            break;
+                        }
+                    }
+                    break;
+                case 7:
+                    var templist7 = GetList(m_TempGrid.CrossInfo7[2]);
+
+                    for (int j = 0; j < templist7.Count; j++)
+                    {
+                        m_TempWord = templist7[j];
+
+                        if (m_TempGrid.CrossInfo7[3] == 100)
+                        { // 단어가 수평일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo7[0], m_TempGrid.CrossInfo7[1] + k] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo7[0], m_TempGrid.CrossInfo7[1] + k] != m_TempWord.Answer[k].ToString())
+                                { // 이미 존재하는 단어가 다를경우
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            { // 입력할 단어가 비어있거나 입력되어있는 단어의 낱말과 일치할때
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo7[0], m_TempGrid.CrossInfo7[1] + z] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist7.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+                        else if (m_TempGrid.CrossInfo7[3] == -100)
+                        { // 단어가 수직일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo7[0] + k, m_TempGrid.CrossInfo7[1]] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo7[0] + k, m_TempGrid.CrossInfo7[1]] != m_TempWord.Answer[k].ToString())
+                                {
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            {
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo7[0] + z, m_TempGrid.CrossInfo7[1]] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist7.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+
+                        if (templist7.Count == j + 1)
+                        {
+                            m_MainList.RemoveRange(0, m_MainList.Count);
+                            ListSet();
+                            for (int a = 0; a < m_WordCout; a++)
+                            {
+                                for (int b = 0; b < m_WordCout; b++)
+                                {
+                                    m_Grid[a, b] = SaveMap[a, b];
+                                }
+                            }
+                            i = -1;
+                            break;
+                        }
+                    }
+                    break;
+                case 8:
+                    var templist8 = GetList(m_TempGrid.CrossInfo8[2]);
+
+                    for (int j = 0; j < templist8.Count; j++)
+                    {
+                        m_TempWord = templist8[j];
+
+                        if (m_TempGrid.CrossInfo8[3] == 100)
+                        { // 단어가 수평일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo8[0], m_TempGrid.CrossInfo8[1] + k] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo8[0], m_TempGrid.CrossInfo8[1] + k] != m_TempWord.Answer[k].ToString())
+                                { // 이미 존재하는 단어가 다를경우
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            { // 입력할 단어가 비어있거나 입력되어있는 단어의 낱말과 일치할때
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo8[0], m_TempGrid.CrossInfo8[1] + z] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist8.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+                        else if (m_TempGrid.CrossInfo8[3] == -100)
+                        { // 단어가 수직일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo8[0] + k, m_TempGrid.CrossInfo8[1]] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo8[0] + k, m_TempGrid.CrossInfo8[1]] != m_TempWord.Answer[k].ToString())
+                                {
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            {
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo8[0] + z, m_TempGrid.CrossInfo8[1]] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist8.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+
+                        if (templist8.Count == j + 1)
+                        {
+                            m_MainList.RemoveRange(0, m_MainList.Count);
+                            ListSet();
+                            for (int a = 0; a < m_WordCout; a++)
+                            {
+                                for (int b = 0; b < m_WordCout; b++)
+                                {
+                                    m_Grid[a, b] = SaveMap[a, b];
+                                }
+                            }
+                            i = -1;
+                            break;
+                        }
+                    }
+                    break;
+                case 9:
+                    var templist9 = GetList(m_TempGrid.CrossInfo9[2]);
+
+                    for (int j = 0; j < templist9.Count; j++)
+                    {
+                        m_TempWord = templist9[j];
+
+                        if (m_TempGrid.CrossInfo9[3] == 100)
+                        { // 단어가 수평일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo9[0], m_TempGrid.CrossInfo9[1] + k] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo9[0], m_TempGrid.CrossInfo9[1] + k] != m_TempWord.Answer[k].ToString())
+                                { // 이미 존재하는 단어가 다를경우
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            { // 입력할 단어가 비어있거나 입력되어있는 단어의 낱말과 일치할때
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo9[0], m_TempGrid.CrossInfo9[1] + z] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist9.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+                        else if (m_TempGrid.CrossInfo9[3] == -100)
+                        { // 단어가 수직일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo9[0] + k, m_TempGrid.CrossInfo9[1]] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo9[0] + k, m_TempGrid.CrossInfo9[1]] != m_TempWord.Answer[k].ToString())
+                                {
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            {
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo9[0] + z, m_TempGrid.CrossInfo9[1]] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist9.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+
+                        if (templist9.Count == j + 1)
+                        {
+                            m_MainList.RemoveRange(0, m_MainList.Count);
+                            ListSet();
+                            for (int a = 0; a < m_WordCout; a++)
+                            {
+                                for (int b = 0; b < m_WordCout; b++)
+                                {
+                                    m_Grid[a, b] = SaveMap[a, b];
+                                }
+                            }
+                            i = -1;
+                            break;
+                        }
+                    }
+                    break;
+                case 10:
+                    var templist10 = GetList(m_TempGrid.CrossInfo10[2]);
+
+                    for (int j = 0; j < templist10.Count; j++)
+                    {
+                        m_TempWord = templist10[j];
+
+                        if (m_TempGrid.CrossInfo10[3] == 100)
+                        { // 단어가 수평일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo10[0], m_TempGrid.CrossInfo10[1] + k] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo10[0], m_TempGrid.CrossInfo10[1] + k] != m_TempWord.Answer[k].ToString())
+                                { // 이미 존재하는 단어가 다를경우
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            { // 입력할 단어가 비어있거나 입력되어있는 단어의 낱말과 일치할때
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo10[0], m_TempGrid.CrossInfo10[1] + z] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist10.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+                        else if (m_TempGrid.CrossInfo10[3] == -100)
+                        { // 단어가 수직일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo10[0] + k, m_TempGrid.CrossInfo10[1]] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo10[0] + k, m_TempGrid.CrossInfo10[1]] != m_TempWord.Answer[k].ToString())
+                                {
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            {
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo10[0] + z, m_TempGrid.CrossInfo10[1]] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist10.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+
+                        if (templist10.Count == j + 1)
+                        {
+                            m_MainList.RemoveRange(0, m_MainList.Count);
+                            ListSet();
+                            for (int a = 0; a < m_WordCout; a++)
+                            {
+                                for (int b = 0; b < m_WordCout; b++)
+                                {
+                                    m_Grid[a, b] = SaveMap[a, b];
+                                }
+                            }
+                            i = -1;
+                            break;
+                        }
+                    }
+                    break;
+                case 11:
+                    var templist11 = GetList(m_TempGrid.CrossInfo11[2]);
+
+                    for (int j = 0; j < templist11.Count; j++)
+                    {
+                        m_TempWord = templist11[j];
+
+                        if (m_TempGrid.CrossInfo11[3] == 100)
+                        { // 단어가 수평일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo11[0], m_TempGrid.CrossInfo11[1] + k] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo11[0], m_TempGrid.CrossInfo11[1] + k] != m_TempWord.Answer[k].ToString())
+                                { // 이미 존재하는 단어가 다를경우
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            { // 입력할 단어가 비어있거나 입력되어있는 단어의 낱말과 일치할때
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo11[0], m_TempGrid.CrossInfo11[1] + z] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist11.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+                        else if (m_TempGrid.CrossInfo11[3] == -100)
+                        { // 단어가 수직일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo11[0] + k, m_TempGrid.CrossInfo11[1]] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo11[0] + k, m_TempGrid.CrossInfo11[1]] != m_TempWord.Answer[k].ToString())
+                                {
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            {
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo11[0] + z, m_TempGrid.CrossInfo11[1]] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist11.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+
+                        if (templist11.Count == j + 1)
+                        {
+                            m_MainList.RemoveRange(0, m_MainList.Count);
+                            ListSet();
+                            for (int a = 0; a < m_WordCout; a++)
+                            {
+                                for (int b = 0; b < m_WordCout; b++)
+                                {
+                                    m_Grid[a, b] = SaveMap[a, b];
+                                }
+                            }
+                            i = -1;
+                            break;
+                        }
+                    }
+                    break;
+                case 12:
+                    var templist12 = GetList(m_TempGrid.CrossInfo12[2]);
+
+                    for (int j = 0; j < templist12.Count; j++)
+                    {
+                        m_TempWord = templist12[j];
+
+                        if (m_TempGrid.CrossInfo12[3] == 100)
+                        { // 단어가 수평일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo12[0], m_TempGrid.CrossInfo12[1] + k] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo12[0], m_TempGrid.CrossInfo12[1] + k] != m_TempWord.Answer[k].ToString())
+                                { // 이미 존재하는 단어가 다를경우
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            { // 입력할 단어가 비어있거나 입력되어있는 단어의 낱말과 일치할때
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo12[0], m_TempGrid.CrossInfo12[1] + z] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist12.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+                        else if (m_TempGrid.CrossInfo12[3] == -100)
+                        { // 단어가 수직일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo12[0] + k, m_TempGrid.CrossInfo12[1]] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo12[0] + k, m_TempGrid.CrossInfo12[1]] != m_TempWord.Answer[k].ToString())
+                                {
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            {
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo12[0] + z, m_TempGrid.CrossInfo12[1]] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist12.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+
+                        if (templist12.Count == j + 1)
+                        {
+                            m_MainList.RemoveRange(0, m_MainList.Count);
+                            ListSet();
+                            for (int a = 0; a < m_WordCout; a++)
+                            {
+                                for (int b = 0; b < m_WordCout; b++)
+                                {
+                                    m_Grid[a, b] = SaveMap[a, b];
+                                }
+                            }
+                            i = -1;
+                            break;
+                        }
+                    }
+                    break;
+                case 13:
+                    var templist13 = GetList(m_TempGrid.CrossInfo13[2]);
+
+                    for (int j = 0; j < templist13.Count; j++)
+                    {
+                        m_TempWord = templist13[j];
+
+                        if (m_TempGrid.CrossInfo13[3] == 100)
+                        { // 단어가 수평일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo13[0], m_TempGrid.CrossInfo13[1] + k] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo13[0], m_TempGrid.CrossInfo13[1] + k] != m_TempWord.Answer[k].ToString())
+                                { // 이미 존재하는 단어가 다를경우
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            { // 입력할 단어가 비어있거나 입력되어있는 단어의 낱말과 일치할때
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo13[0], m_TempGrid.CrossInfo13[1] + z] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist13.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+                        else if (m_TempGrid.CrossInfo13[3] == -100)
+                        { // 단어가 수직일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo13[0] + k, m_TempGrid.CrossInfo13[1]] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo13[0] + k, m_TempGrid.CrossInfo13[1]] != m_TempWord.Answer[k].ToString())
+                                {
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            {
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo13[0] + z, m_TempGrid.CrossInfo1[1]] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist13.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+
+                        if (templist13.Count == j + 1)
+                        {
+                            m_MainList.RemoveRange(0, m_MainList.Count);
+                            ListSet();
+                            for (int a = 0; a < m_WordCout; a++)
+                            {
+                                for (int b = 0; b < m_WordCout; b++)
+                                {
+                                    m_Grid[a, b] = SaveMap[a, b];
+                                }
+                            }
+                            i = -1;
+                            break;
+                        }
+                    }
+                    break;
+                case 14:
+                    var templist14 = GetList(m_TempGrid.CrossInfo14[2]);
+
+                    for (int j = 0; j < templist14.Count; j++)
+                    {
+                        m_TempWord = templist14[j];
+
+                        if (m_TempGrid.CrossInfo14[3] == 100)
+                        { // 단어가 수평일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo14[0], m_TempGrid.CrossInfo14[1] + k] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo14[0], m_TempGrid.CrossInfo14[1] + k] != m_TempWord.Answer[k].ToString())
+                                { // 이미 존재하는 단어가 다를경우
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            { // 입력할 단어가 비어있거나 입력되어있는 단어의 낱말과 일치할때
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo14[0], m_TempGrid.CrossInfo14[1] + z] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist14.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+                        else if (m_TempGrid.CrossInfo14[3] == -100)
+                        { // 단어가 수직일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo14[0] + k, m_TempGrid.CrossInfo14[1]] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo14[0] + k, m_TempGrid.CrossInfo14[1]] != m_TempWord.Answer[k].ToString())
+                                {
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            {
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo14[0] + z, m_TempGrid.CrossInfo14[1]] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist14.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+
+                        if (templist14.Count == j + 1)
+                        {
+                            m_MainList.RemoveRange(0, m_MainList.Count);
+                            ListSet();
+                            for (int a = 0; a < m_WordCout; a++)
+                            {
+                                for (int b = 0; b < m_WordCout; b++)
+                                {
+                                    m_Grid[a, b] = SaveMap[a, b];
+                                }
+                            }
+                            i = -1;
+                            break;
+                        }
+                    }
+                    break;
+                case 15:
+                    var templist15 = GetList(m_TempGrid.CrossInfo15[2]);
+
+                    for (int j = 0; j < templist15.Count; j++)
+                    {
+                        m_TempWord = templist15[j];
+
+                        if (m_TempGrid.CrossInfo15[3] == 100)
+                        { // 단어가 수평일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo15[0], m_TempGrid.CrossInfo15[1] + k] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo15[0], m_TempGrid.CrossInfo15[1] + k] != m_TempWord.Answer[k].ToString())
+                                { // 이미 존재하는 단어가 다를경우
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            { // 입력할 단어가 비어있거나 입력되어있는 단어의 낱말과 일치할때
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo15[0], m_TempGrid.CrossInfo15[1] + z] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist15.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+                        else if (m_TempGrid.CrossInfo15[3] == -100)
+                        { // 단어가 수직일때
+                            int count = 0;
+                            for (int k = 0; k < m_TempWord.Length; k++)
+                            {
+                                if (m_Grid[m_TempGrid.CrossInfo15[0] + k, m_TempGrid.CrossInfo15[1]] != "o" &&
+                                    m_Grid[m_TempGrid.CrossInfo15[0] + k, m_TempGrid.CrossInfo15[1]] != m_TempWord.Answer[k].ToString())
+                                {
+                                    count++;
+                                }
+                            }
+                            if (count == 0)
+                            {
+                                for (int z = 0; z < m_TempWord.Length; z++)
+                                {
+                                    m_Grid[m_TempGrid.CrossInfo15[0] + z, m_TempGrid.CrossInfo15[1]] = m_TempWord.Answer[z].ToString();
+                                }
+                                m_MainList.Add(m_TempWord);
+                                templist15.Remove(m_TempWord);
+                                break;
+                            }
+                        }
+
+                        if (templist15.Count == j + 1)
+                        {
+                            m_MainList.RemoveRange(0, m_MainList.Count);
+                            ListSet();
+                            for (int a = 0; a < m_WordCout; a++)
+                            {
+                                for (int b = 0; b < m_WordCout; b++)
+                                {
+                                    m_Grid[a, b] = SaveMap[a, b];
+                                }
+                            }
+                            i = -1;
+                            break;
+                        }
+                    }
+                    break;
+                default:
+                    break;
             }
         }
 
-        for (int i = 0; i < m_MainList.Count; i++)
+        // 단어UI 오브젝트 생성
+        for (int i = 0; i < m_WordCout; i++)
         {
-            Debug.Log(m_MainList[i].Answer);
+            for (int j = 0; j < m_WordCout; j++)
+            {
+                if (m_Grid[i,j] != "x")
+                {
+                    var temp = Instantiate(GridPrefab, GameObject.Find("GridContainer").gameObject.transform);
+                    temp.name = m_Grid[i, j];
+                    m_ObjList.Add(temp);
+                    temp.transform.localPosition = new Vector3((110 * i) - 250, (110 * j) - 250, 0);
+                }
+            }
         }
 
-        int temp_cross = 0;
-        for (int i = 0; i < m_MainList.Count; i++)
-        {
-            int count = 0;
-            if (temp_cross != 0)
-            {
-                count++;
-                temp_cross = 0;
-            }
-            for (int j = 0; j < m_ObjList.Count; j++)
-            {
-                var var_int = m_ObjList[j].name.Split('&');
-                if (var_int.Length == 1)
-                {
-                    if (var_int[0] == (i + 1).ToString())
-                    {
-                        m_ObjList[j].name = m_MainList[i].Answer[count].ToString();
-                        count++;
-                    }
-                }
-                else
-                {
-                    if (var_int[0] == (i + 1).ToString())
-                    {
-                        m_ObjList[j].name = m_MainList[i].Answer[count].ToString();
-                        temp_cross = int.Parse(var_int[1]);
-                        count++;
-                    }
-                }
-            }
-        }
+        m_bIsMake = true;
+    }
+
+    public List<Word> GetMainList()
+    {
+        return m_MainList;
     }
 
     List<Word> GetList(int i)
@@ -519,26 +1317,6 @@ public class GridMgr : MonoBehaviour
             }
         }
     }
-    void MakeGrid(GridInfo info)
-    {
-        for (int i = 0; i < info.GridSize; i++)
-        {
-            for (int j = 0; j < info.GridSize; j++)
-            {
-                var temp_int = info.Grid[i, j].Split('&');
-                if (int.Parse(temp_int[0]) != 0)
-                {
-                    var temp = Instantiate(GridPrefab, GameObject.Find("GridContainer").gameObject.transform);
-                    //temp.name = m_MakeWord.Answer + " " + i;
-                    temp.name = info.Grid[i,j].ToString();
-                    m_ObjList.Add(temp);
-                    temp.transform.localPosition = new Vector3((110 * i) - 250, (110 * j) - 250, 0);
-                }
-            }
-        }
-
-        PushData();
-    }
     public void DeleteObj()
     {
         if (m_ObjList == null)
@@ -554,26 +1332,31 @@ public class GridMgr : MonoBehaviour
     public void MakeGrid1()
     {
         DeleteObj();
-        MakeGrid(LoadMapData("Scripts/Grid/Grid1.csv"));
+        LoadMapData("/Resource/Map/GridMap1Info.json");
+        PushData();
     }
     public void MakeGrid2()
     {
         DeleteObj();
-        MakeGrid(LoadMapData("Scripts/Grid/Grid2.csv"));
+        LoadMapData("/Resource/Map/GridMap2Info.json");
+        PushData();
     }
     public void MakeGrid3()
     {
         DeleteObj();
-        MakeGrid(LoadMapData("Scripts/Grid/Grid3.csv"));
+        LoadMapData("/Resource/Map/GridMap3Info.json");
+        PushData();
     }
     public void MakeGrid4()
     {
         DeleteObj();
-        MakeGrid(LoadMapData("Scripts/Grid/Grid4.csv"));
+        LoadMapData("/Resource/Map/GridMap4Info.json");
+        PushData();
     }
     public void MakeGrid5()
     {
         DeleteObj();
-        MakeGrid(LoadMapData("Scripts/Grid/Grid5.csv"));
+        LoadMapData("/Resource/Map/GridMap5Info.json");
+        PushData();
     }
 }

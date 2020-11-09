@@ -5,27 +5,29 @@ using UnityEngine;
 public class GridInfo
 {
     // 그리드
-    private string[,] m_Grid;
-    public string[,] Grid { get { return m_Grid; } set { m_Grid = value; } }
-    private int m_GridSize;
-    public int GridSize { get { return m_GridSize; } set { m_GridSize = value; } }
-    // 단어 길이 리스트
-    private List<int> m_WordLengthList;
-    public List<int> WordLenghtList { get { return m_WordLengthList; } set { m_WordLengthList = value; } }
-    // 단어 크로스 인덱스 리스트
-    private List<string> m_WordCrossList;
-    public List<string> WordCrossList { get { return m_WordCrossList; } set { m_WordCrossList = value; } }
-
+    public string[] Grid;
+    // 크로스 정보
+    public int[] CrossInfo1;
+    public int[] CrossInfo2;
+    public int[] CrossInfo3;
+    public int[] CrossInfo4;
+    public int[] CrossInfo5;
+    public int[] CrossInfo6;
+    public int[] CrossInfo7;
+    public int[] CrossInfo8;
+    public int[] CrossInfo9;
+    public int[] CrossInfo10;
+    public int[] CrossInfo11;
+    public int[] CrossInfo12;
+    public int[] CrossInfo13;
+    public int[] CrossInfo14;
+    public int[] CrossInfo15;
 
     public GridInfo()
     {
     }
     // 생성자
-    public GridInfo(int x, int y)
+    public GridInfo(int _gridsize, int _wordCount)
     {
-        m_Grid = new string[x, y];
-        GridSize = x;
-        WordLenghtList = new List<int>();
-        WordCrossList = new List<string>();
     }
 }

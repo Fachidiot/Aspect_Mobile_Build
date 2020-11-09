@@ -23,11 +23,8 @@ public class GridWord : MonoBehaviour
             m_IsDouble = false;
             Answer.text = "";
             Mgr = GameObject.Find("InputMgr");
-
-
-            var temp = this.gameObject.name.Split('&');
+            
             Answer.text = this.gameObject.name;
-            m_Answer = temp[0];
         }
         catch (System.Exception ex)
         {
@@ -37,48 +34,7 @@ public class GridWord : MonoBehaviour
 
     public void ClickButton()
     {
-        return;
-        if (this.gameObject.transform.localPosition.z != 0)
-        {
-            this.gameObject.transform.localPosition += Vector3.forward;
-        }
-
-        if (m_IsDouble)
-        {
-            if (gameObject.tag == "Vertical")
-            {
-                var temp = GameObject.FindGameObjectsWithTag("Horizontal");
-                for (int i = 0; i < temp.Length; i++)
-                {
-                    if (temp[i].transform.localPosition == this.gameObject.transform.localPosition)
-                    {
-                        var obj = temp[i];
-                        m_IsDouble = false;
-                        obj.transform.localPosition += Vector3.back;
-                        obj.GetComponent<InputWord>().m_IsDouble = false;
-                        obj.GetComponent<InputWord>().ClickButton();
-                        return;
-                    }
-                }
-            }
-            else
-            {
-                var temp = GameObject.FindGameObjectsWithTag("Vertical");
-                for (int i = 0; i < temp.Length; i++)
-                {
-                    if (temp[i].transform.localPosition == this.gameObject.transform.localPosition)
-                    {
-                        var obj = temp[i];
-                        m_IsDouble = false;
-                        obj.transform.localPosition += Vector3.back;
-                        obj.GetComponent<InputWord>().m_IsDouble = false;
-                        obj.GetComponent<InputWord>().ClickButton();
-                        return;
-                    }
-                }
-            }
-        }
-        Mgr.GetComponent<InputMgr>().QuestionClick(m_Answer);
+        Mgr.GetComponent<InputMgr_2>().QuestionClick(m_Answer);
         m_IsDouble = true;
     }
 
