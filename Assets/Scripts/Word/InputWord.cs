@@ -6,6 +6,7 @@ using UnityEngine.UI;
 public class InputWord : MonoBehaviour
 {
     public Text Answer;
+    public Text Hint;
 
     [HideInInspector]
     public bool m_IsDouble;
@@ -87,8 +88,19 @@ public class InputWord : MonoBehaviour
         Answer.text = m_Answer[m_Index].ToString();
     }
 
+    public void SetHint(string _input)
+    {
+        if (Hint.text.Length > 1)
+            return;
+        Hint.text = _input;
+    }
+
     public void Input(string _input)
     {
+        if(Hint.text != "")
+        {
+            Hint.text = "";
+        }
         Answer.text = _input;
     }
 

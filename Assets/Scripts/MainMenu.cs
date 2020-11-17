@@ -5,7 +5,12 @@ using UnityEngine.UI;
 
 public class MainMenu : MonoBehaviour
 {
-    public Text Score;
+    [Range(5, 30)]
+    public int Count;
+    [Range(30, 480)]
+    public int Time;
+
+    public InputMgr InputManager;
     public Text AssistantOn;
     public Text AssistantOff;
     
@@ -15,17 +20,22 @@ public class MainMenu : MonoBehaviour
     {
         if(!m_bAssistant)
         {
-            //InputManager.GetComponent<InputMgr>().Assistant = true;
+            InputManager.Assistant = true;
             AssistantOn.gameObject.SetActive(true);
             Debug.Log("Assistant On");
             m_bAssistant = true;
         }
         else
         {
-            //InputManager.GetComponent<InputMgr>().Assistant = false;
+            InputManager.Assistant = false;
             AssistantOff.gameObject.SetActive(true);
             Debug.Log("Assistant Off");
             m_bAssistant = false;
         }
+    }
+
+    public void Exit()
+    { // 게임 종료
+        Application.Quit();
     }
 }

@@ -80,7 +80,11 @@ public class WordMgr : MonoBehaviour
 
         if(IsMake)
         {
-            Grid.GetComponent<RectTransform>().sizeDelta = new Vector2(110 + RectMax.x - RectMin.x, 110 + RectMax.y - RectMin.y);
+            for (int i = 0; i < m_GridMakeList.Count; i++)
+            {
+                m_GridMakeList[i].GetComponent<Button>().interactable = true;
+            }
+            Grid.GetComponent<RectTransform>().sizeDelta = new Vector2(330 + RectMax.x - RectMin.x, 330 + RectMax.y - RectMin.y);
             float tempx = (RectMax.x + RectMin.x) / 2;
             float tempy = (RectMax.y + RectMin.y) / 2;
             gameObject.transform.localPosition = new Vector3(-tempx, -tempy, 0);

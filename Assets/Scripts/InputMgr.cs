@@ -13,6 +13,10 @@ public class InputMgr : MonoBehaviour
     public Image Congratulations;
     public Image Correct;
     public Image Wrong;
+    [Header("MainMenu")]
+    public Text RewardCount;
+    public Text TimeSet;
+    public Text CountSet;
     [Header("Text UI")]
     public Text CurrentHint;
     public Text QuestionCount;
@@ -28,9 +32,17 @@ public class InputMgr : MonoBehaviour
     [Header("Effect Time")]
     public Text WinTime;
     public Text OverCount;
+    public GameObject EffectNoTime;
+    [Header("Effect Sound")]
+    public AudioSource CorrectSource;
+    public AudioSource SelectSource;
+    public AudioSource BKSpaceSource;
+    public AudioSource NotimeSource;
 
     private float m_CurrentTime;
-
+    private float m_EffectTime;
+    private bool m_o = true;
+    private bool m_x = true;
     private string m_Difficult;
     private int m_Score = -1;
     public int GetScore(string difficult)
@@ -67,11 +79,17 @@ public class InputMgr : MonoBehaviour
         m_IsList = false;
         m_IsEnd = false;
         m_IsInput = false;
+        m_o = true;
+        m_x = true;
         Correct.gameObject.SetActive(false);
         Wrong.gameObject.SetActive(false);
         m_IsCheck = false;
         Correct.color += new Color(0, 0, 0, 255);
         Wrong.color += new Color(0, 0, 0, 255);
+        CurrentHint.text = "";
+        EffectNoTime.SetActive(false);
+        TimerText.fontSize = 90;
+        NotimeSource.gameObject.SetActive(false);
 
         if (m_ObjectList != null)
         {
@@ -85,6 +103,11 @@ public class InputMgr : MonoBehaviour
         }
 
         m_Power = false;
+    }
+    public void PowerReboot()
+    {
+        PowerOff();
+        PowerOn();
     }
 
     private bool m_IsStart;
@@ -137,10 +160,58 @@ public class InputMgr : MonoBehaviour
         return temp;
     }
 
-    public void KeyInput(string _input)
+    public void KeyInput(string _input, bool ishint = false)
     {
         if (m_IsClicked)
         {
+            if(ishint)
+            {
+                if (m_InputIndexList[CurrentIndex] >= m_Answer.Answer.Length)
+                {
+                    return;
+                }
+
+                for (int i = 0; i < m_Answer.Answer.Length; i++)
+                {
+                    if(m_Answer.Answer.Length == i + m_InputIndexList[CurrentIndex])
+                    {
+                        return;
+                    }
+                    TempInput = GameObject.Find(m_Answer.Answer + " " + (m_InputIndexList[CurrentIndex] + i));
+                    if (TempInput.GetComponent<InputWord>().Hint.text == "" && TempInput.GetComponent<InputWord>().Answer.text == "")
+                    {
+                        _input = _input[m_InputIndexList[CurrentIndex] + i].ToString();
+                        break;
+                    }
+                    else
+                    {
+                        if(i + 1 == m_Answer.Answer.Length)
+                        {
+                            return;
+                        }
+                    }
+                }
+
+                var temp = CheckCross();
+
+                if (temp != null)
+                { // 겹치는 부분이 존재함
+                    if (temp.GetComponent<InputWord>().Answer.text != "")
+                    { // 겹쳐있는 단어에 이미 다른 알파벳이 들어가 있을때
+                        return;
+                    }
+                    Debug.Log(_input);
+                    TempInput.GetComponent<InputWord>().SetHint(_input);
+                    temp.GetComponent<InputWord>().SetHint(_input);
+
+                    return;
+                }
+
+                Debug.Log(_input);
+                TempInput.GetComponent<InputWord>().SetHint(_input);
+
+                return;
+            }
 
             if (_input == "BK_SPACE")
             {
@@ -150,6 +221,8 @@ public class InputMgr : MonoBehaviour
                     return;
                 }
 
+                BKSpaceSource.Play();
+
                 TempInput = GameObject.Find(m_Answer.Answer + " " + (m_InputIndexList[CurrentIndex] - 1));
                 var temp1 = CheckCross();
 
@@ -157,9 +230,18 @@ public class InputMgr : MonoBehaviour
                 { // 겹치는 부분이 존재함
                     if (temp1.GetComponent<InputWord>().IsCorrect)
                     { // 겹치는 단어가 정답일때
+                        if (m_InputList[CurrentIndex].Length <= 1)
+                        {
+                            return;
+                        }
                         string var_string = temp1.GetComponent<InputWord>().GetInput();
                         m_InputList[CurrentIndex] = m_InputList[CurrentIndex].Remove(m_InputList[CurrentIndex].Length - 1);
+                        m_InputList[CurrentIndex] = m_InputList[CurrentIndex].Remove(m_InputList[CurrentIndex].Length - 1);
+
+                        TempInput = GameObject.Find(m_Answer.Answer + " " + (m_InputIndexList[CurrentIndex] - 2));
+                        TempInput.GetComponent<InputWord>().Wrong();
                         Debug.Log(_input);
+                        m_InputIndexList[CurrentIndex]--;
                         m_InputIndexList[CurrentIndex]--;
                         return;
                     }
@@ -184,27 +266,33 @@ public class InputMgr : MonoBehaviour
             }
             TempInput = GameObject.Find(m_Answer.Answer + " " + m_InputIndexList[CurrentIndex]);
 
-            var temp = CheckCross();
+            var temp2 = CheckCross();
+            SelectSource.Play();
 
-            if (temp != null)
+            if (temp2 != null)
             { // 겹치는 부분이 존재함
-                if(temp.GetComponent<InputWord>().IsCorrect)
-                { // 겹치는 단어가 정답일때
-                    string var_string = temp.GetComponent<InputWord>().GetInput();
+                if(temp2.GetComponent<InputWord>().GetInput() != "")
+                { // 겹쳐있는 단어에 이미 다른 알파벳이 들어가 있을때
+                    string var_string = temp2.GetComponent<InputWord>().GetInput();
                     Debug.Log(var_string);
-                    TempInput.GetComponent<InputWord>().Input(var_string);
-                    temp.GetComponent<InputWord>().Input(var_string);
+                    m_InputList[CurrentIndex] += string.Join("", var_string);
+                    m_InputIndexList[CurrentIndex]++;
+
+                    TempInput = GameObject.Find(m_Answer.Answer + " " + m_InputIndexList[CurrentIndex]);
+                    TempInput.GetComponent<InputWord>().Input(_input);
                     m_InputIndexList[CurrentIndex]++;
                     m_IsInput = true;
-                    m_InputList[CurrentIndex] += string.Join("", var_string);
+                    Debug.Log(_input);
+                    m_InputList[CurrentIndex] += string.Join("", _input);
                     return;
                 }
                 Debug.Log(_input);
                 TempInput.GetComponent<InputWord>().Input(_input);
-                temp.GetComponent<InputWord>().Input(_input);
+                temp2.GetComponent<InputWord>().Input(_input);
                 m_InputIndexList[CurrentIndex]++;
                 m_IsInput = true;
                 m_InputList[CurrentIndex] += string.Join("", _input);
+
                 return;
             }
 
@@ -213,6 +301,20 @@ public class InputMgr : MonoBehaviour
             m_InputIndexList[CurrentIndex]++;
             m_IsInput = true;
             m_InputList[CurrentIndex] += string.Join("", _input);
+
+            // 마지막 인덱스 전에서 마지막 인덱스가 정답인 경우에 채워 넣어준다.
+            if (m_Answer.Length - 1 == m_InputIndexList[CurrentIndex])
+            {
+                TempInput = GameObject.Find(m_Answer.Answer + " " + m_InputIndexList[CurrentIndex]);
+                if (TempInput.GetComponent<InputWord>().GetInput() != "")
+                { // 비어 있지 않을때
+                    string var_string = TempInput.GetComponent<InputWord>().GetInput();
+                    Debug.Log(var_string);
+                    m_InputList[CurrentIndex] += string.Join("", var_string);
+                    m_InputIndexList[CurrentIndex]++;
+                }
+            }
+
             return;
         }
     }
@@ -247,36 +349,66 @@ public class InputMgr : MonoBehaviour
         return null;
     }
 
+    IEnumerator FadeOut(float fadeOutTime, Image image)
+    {
+        Color tempColor = image.color;
+        while (tempColor.a > 0f)
+        {
+            tempColor.a -= Time.deltaTime / fadeOutTime;
+            image.color = tempColor;
+
+            if (tempColor.a <= 0.1f)
+            {
+                tempColor.a = 1f;
+
+                image.gameObject.SetActive(false);
+
+                StopAllCoroutines();
+            }
+            yield return null;
+        }
+        image.color = tempColor;
+    }
+
     void DiffuseEffect()
     {
-        if(Correct.IsActive())
+        if (Correct.IsActive())
         { // 정답 이펙트
-            while (Correct.color.a > 0f)
-            {
-                Correct.color -= new Color(0, 0, 0, 0.04f * Time.deltaTime);
-            }
-            m_IsCheck = false;
-
-            RESET();
-
-            // 문제를 맞혔을때만 다음으로 넘어가거나 뒤로 돌아가게 해줘야함
-            if(Assistant)
-            {
-                Next(true);
-            }
+            StartCoroutine(FadeOut(1.2f, Correct));
+            m_o = false;
         }
         else
-        { // 오답 이펙트
-            while (Wrong.color.a > 0f)
+        {
+            if(!m_o)
             {
-                Wrong.color -= new Color(0, 0, 0, 0.04f * Time.deltaTime);
-            }
-            m_IsCheck = false;
-            RESET();
+                m_IsCheck = false;
 
-            // 문제를 틀렸을때는 다시 해당 문제로 가게 해줘야함
-            m_IsClicked = true;
-            HighLight();
+                RESET();
+                m_o = true;
+                // 문제를 맞혔을때만 다음으로 넘어가거나 뒤로 돌아가게 해줘야함
+                if (Assistant)
+                {
+                    Next(true);
+                }
+            }
+        }
+        if (Wrong.IsActive())
+        { // 오답 이펙트
+            StartCoroutine(FadeOut(1.2f, Wrong));
+            m_x = false;
+        }
+        else
+        {
+            if(!m_x)
+            {
+                m_IsCheck = false;
+                RESET();
+
+                // 문제를 틀렸을때는 다시 해당 문제로 가게 해줘야함
+                m_IsClicked = true;
+                HighLight();
+                m_x = true;
+            }
         }
         return;
     }
@@ -348,9 +480,24 @@ public class InputMgr : MonoBehaviour
             // 게임 시작 화면으로
             TimeOver.gameObject.SetActive(true);
             OverCount.text = m_DoneList.Count.ToString() + " 개";
+            NotimeSource.Stop();
             return;
         }
         m_CurrentTime += Time.deltaTime;
+        if(MaxTime - m_CurrentTime <= 15)
+        { // 시간 없음 이펙트
+            if(!NotimeSource.gameObject.activeSelf)
+            {
+                NotimeSource.gameObject.SetActive(true);
+            }
+            float DeltaZ = (Mathf.Sin(m_EffectTime + Time.deltaTime) - Mathf.Sin(m_EffectTime));
+            TimerText.fontSize += (int)(DeltaZ * 52);
+            if (DeltaZ >= 0)
+                EffectNoTime.SetActive(true);
+            else
+                EffectNoTime.SetActive(false);
+            m_EffectTime += Time.deltaTime;
+        }
         TimerText.text = ((int)(MaxTime - m_CurrentTime)).ToString();
     }
 
@@ -391,6 +538,7 @@ public class InputMgr : MonoBehaviour
                         if (m_InputList[CurrentIndex] == m_Answer.Answer)
                         {
                             // 정답
+                            CorrectSource.Play();
                             Correct.gameObject.SetActive(true);
                             SetCorrect();
                             m_DoneList.Add(m_Answer);
@@ -398,10 +546,9 @@ public class InputMgr : MonoBehaviour
                             Word TempWord = new Word();
                             if (index + 1 != m_WordList.Count)
                             {
-                                TempWord = m_WordList[index];
+                                TempWord = m_WordList[index + 1];
                                 if (Assistant)
                                 {
-                                    m_Answer = TempWord;
                                     index = FindWord(m_Answer);
                                     CurrentIndex = index;
                                 }
@@ -409,6 +556,10 @@ public class InputMgr : MonoBehaviour
                             m_WordList.Remove(m_Answer);
                             m_InputList.Remove(m_Answer.Answer);
                             m_InputIndexList.Remove(m_Answer.Length);
+                            if (Assistant)
+                            {
+                                m_Answer = TempWord;
+                            }
                             m_IsCheck = true;
                         }
                         else
@@ -468,6 +619,7 @@ public class InputMgr : MonoBehaviour
                 return;
             }
         }
+        Debug.Log(m_Answer.Answer);
         HighLight();
         if(Assistant)
         {
@@ -496,6 +648,7 @@ public class InputMgr : MonoBehaviour
         {
             return;
         }
+        Debug.Log(m_Answer.Answer);
         HighLight();
         if (Assistant)
         {
@@ -561,13 +714,15 @@ public class InputMgr : MonoBehaviour
                 }
             }
         }
+        m_o = true;
+        m_x = true;
         m_IsClicked = false;
         m_IsInput = false;
         Correct.gameObject.SetActive(false);
         Wrong.gameObject.SetActive(false);
         m_IsCheck = false;
-        Correct.color += new Color(0, 0, 0, 255);
-        Wrong.color += new Color(0, 0, 0, 255);
+        Correct.color = new Color(1, 1, 1, 1);
+        Wrong.color = new Color(1, 1, 1, 1);
     }
 
     int FindWord(Word word)
@@ -583,8 +738,65 @@ public class InputMgr : MonoBehaviour
         return -1;
     }
 
+    int FindDoneWord(string _answer)
+    {
+        for (int i = 0; i < m_DoneList.Count; i++)
+        {
+            if(m_DoneList[i].Answer == _answer)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+    public void ShowHint()
+    {
+        if (m_Answer == null)
+            return;
+
+        KeyInput(m_Answer.Answer, true);
+    }
+
     public void Pause(bool power)
     {
         m_Power = power;
+    }
+
+    public void CountUp()
+    {
+        if (MaxCount >= 30)
+            return;
+        MaxCount = MaxCount + 5;
+        RewardCount.text = ((int)((MaxCount * (510 - MaxTime)) / 60)).ToString() + " 개";
+        CountSet.text = MaxCount.ToString() + " 개";
+    }
+
+    public void CountDown()
+    {
+        if (MaxCount <= 5)
+            return;
+        MaxCount = MaxCount - 5;
+        RewardCount.text = ((int)((MaxCount * (510 - MaxTime)) / 60)).ToString() + " 개";
+        CountSet.text = MaxCount.ToString() + " 개";
+    }
+
+    public void TimeUp()
+    {
+        if (MaxTime >= 480)
+            return;
+        MaxTime = MaxTime + 30;
+        RewardCount.text = ((int)((MaxCount * (510 - MaxTime)) / 60)).ToString() + " 개";
+        TimeSet.text = (MaxTime / 60).ToString() + " 분";
+    }
+
+    public void TimeDown()
+    {
+        if (MaxTime <= 30)
+            return;
+        MaxTime = MaxTime - 30;
+        RewardCount.text = ((int)((MaxCount * (510 - MaxTime)) / 60)).ToString() + " 개";
+        TimeSet.text = (MaxTime / 60).ToString() + " 분";
     }
 }

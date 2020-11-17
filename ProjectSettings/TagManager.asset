@@ -6,6 +6,8 @@ TagManager:
   tags:
   - Vertical
   - Horizontal
+  - BT_USE
+  - BT_DONT
   layers:
   - Default
   - TransparentFX
