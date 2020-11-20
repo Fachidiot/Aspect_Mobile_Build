@@ -19,22 +19,15 @@ public class InputWord : MonoBehaviour
 
     void Start()
     {
-        try
-        {
-            m_IsDouble = false;
-            Answer.text = "";
-            Mgr = GameObject.Find("InputMgr");
+        m_IsDouble = false;
+        Answer.text = "";
+        Mgr = GameObject.Find("InputMgr");
 
 
-            var temp = this.gameObject.name.Split(' ');
-            //Answer.text = this.gameObject.name[int.Parse(temp[1])].ToString();
-            m_Answer = temp[0];
-            m_Index = int.Parse(temp[1]);
-        }
-        catch (System.Exception ex)
-        {
-            Debug.LogWarning(ex.Message);
-        }
+        var temp = this.gameObject.name.Split(' ');
+        //Answer.text = this.gameObject.name[int.Parse(temp[1])].ToString();
+        m_Answer = temp[0];
+        m_Index = int.Parse(temp[1]);
     }
 
     public void ClickButton()
@@ -99,7 +92,7 @@ public class InputWord : MonoBehaviour
     {
         if(Hint.text != "")
         {
-            Hint.text = "";
+            Hint.gameObject.SetActive(false);
         }
         Answer.text = _input;
     }
@@ -112,6 +105,10 @@ public class InputWord : MonoBehaviour
     public void Wrong()
     {
         Answer.text = "";
+        if(Hint.text != "")
+        {
+            Hint.gameObject.SetActive(true);
+        }
     }
 
     public void SetUp(string _word, int index)

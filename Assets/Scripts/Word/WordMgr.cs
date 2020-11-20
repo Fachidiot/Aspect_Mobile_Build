@@ -44,6 +44,7 @@ public class WordMgr : MonoBehaviour
     private Word m_TempWord;
     private bool m_bIsMake;
     public bool IsMake { get { return m_bIsMake; } set { m_bIsMake = value; } }
+    private bool m_bRectSet;
     // 더이상 단어를 못만들어줄때
     private bool m_bMakeAble;
     private bool m_bVertical;
@@ -78,7 +79,7 @@ public class WordMgr : MonoBehaviour
         if (!m_bIsMake && m_WordList.Count > 0)
             Logic();
 
-        if(IsMake)
+        if(IsMake && !m_bRectSet)
         {
             for (int i = 0; i < m_GridMakeList.Count; i++)
             {
@@ -88,6 +89,8 @@ public class WordMgr : MonoBehaviour
             float tempx = (RectMax.x + RectMin.x) / 2;
             float tempy = (RectMax.y + RectMin.y) / 2;
             gameObject.transform.localPosition = new Vector3(-tempx, -tempy, 0);
+
+            m_bRectSet = true;
         }
     }
 
@@ -1104,6 +1107,7 @@ public class WordMgr : MonoBehaviour
         safeloop = 0;
         m_CurrentWordCount = 0;
         m_bIsMake = false;
+        m_bRectSet = false;
         m_bMakeAble = true;
         m_bVertical = true;
         m_MakeList = new List<Word>();
